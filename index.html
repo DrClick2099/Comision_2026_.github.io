@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conformación de Empresas | Comisión 2026</title>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
   <style>
     :root {
       --primary: #1b365d;
@@ -68,6 +71,7 @@
     .btn:hover { opacity: 0.9; }
     .btn-save { background-color: var(--success); color: white; }
     .btn-word { background-color: var(--word-blue); color: white; }
+    .btn-privacy { background-color: #374151; color: white; }
     .btn-cloud { background-color: var(--info); color: white; }
     .btn-export { background-color: #4b5563; color: white; }
     .btn-add { background-color: var(--primary-light); color: white; padding: 8px 14px; }
@@ -167,7 +171,7 @@
 
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
     }
@@ -175,18 +179,18 @@
     .metric-card {
       background: white;
       border-radius: 8px;
-      padding: 14px;
+      padding: 14px 18px;
       border-left: 4px solid var(--primary);
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
     }
 
     .metric-card.balance { border-left-color: var(--success); }
     .metric-card.spent { border-left-color: var(--accent); }
     .metric-card.unbilled { border-left-color: var(--danger); }
-    .metric-card.allowance { border-left-color: var(--info); }
 
     .metric-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-    .metric-val { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+    .metric-val { font-size: 1.4rem; font-weight: 700; margin-top: 4px; }
 
     .table-responsive {
       overflow-x: auto;
@@ -236,6 +240,46 @@
       gap: 12px;
       align-items: center;
     }
+
+    .drop-zone {
+      border: 2px dashed #93c5fd;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .drop-zone:hover { background-color: #eff6ff; }
+
+    .verification-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    .status-pill {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .pill-ok { background: #dcfce7; color: #15803d; }
+    .pill-fail { background: #fee2e2; color: #b91c1c; }
+    .pill-wait { background: #fef3c7; color: #b45309; }
+
+    .dup-alert {
+      background-color: #fef2f2;
+      border: 1px solid #f87171;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -245,9 +289,10 @@
     <div class="top-bar">
       <div>
         <h1>Conformación de Empresas | Comisión 2026</h1>
-        <small style="color: #93c5fd; font-size: 0.75rem;">Operativo RENEM • Generador Oficial de Documento Word</small>
+        <small style="color: #93c5fd; font-size: 0.75rem;">Operativo RENEM • Supervisión y Comprobaciones</small>
       </div>
       <div class="action-buttons">
+        <button type="button" class="btn btn-privacy" id="btn-privacy-toggle" onclick="togglePrivacyMode()">👁️ Ocultar Montos</button>
         <button type="button" class="btn btn-word" onclick="downloadWordDocument()">📄 Descargar en Word (.doc)</button>
         <button type="button" class="btn btn-save" onclick="saveToStorage(true)">💾 Guardar</button>
         <button type="button" class="btn btn-cloud" onclick="syncToCloud(event)">☁️ Sincronizar Nube</button>
@@ -256,9 +301,10 @@
         <input type="file" id="importInput" style="display:none" onchange="importJSON(event)" accept=".json">
       </div>
     </div>
+    
     <nav class="nav-tabs">
-      <button type="button" class="tab-btn active" onclick="switchTab('tab-viaticos')">💰 Control de Viáticos y 20%</button>
-      <button type="button" class="tab-btn" onclick="switchTab('tab-fiscal')">🔍 Ficha Fiscal INEGI</button>
+      <button type="button" class="tab-btn active" onclick="switchTab('tab-fiscal')">🔍 Verificador Fiscal / Subir Factura</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-viaticos')">💰 Control de Viáticos</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-gabinete')">🏢 Actividades Gabinete</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-campo')">🚗 Actividades Campo</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-concentrado')">📊 Concentrado y Descargables</button>
@@ -267,7 +313,7 @@
 
   <main class="container">
 
-    <!-- DATOS VINCULADOS DEL COMISIONADO (SIEMPRE VISIBLES) -->
+    <!-- DATOS VINCULADOS DEL COMISIONADO -->
     <div class="profile-banner">
       <div class="form-group">
         <label style="color:#1e40af;">👤 Nombre y Puesto del Supervisor/a:</label>
@@ -287,35 +333,100 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA: CONTROL DE VIÁTICOS ================= -->
-    <section id="tab-viaticos" class="tab-content active">
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Presupuesto Asignado</div>
-          <div class="metric-val" id="metric-budget">$0.00</div>
+    <!-- ================= PESTAÑA 1: VERIFICADOR FISCAL Y SUBIR FACTURA ================= -->
+    <section id="tab-fiscal" class="tab-content active">
+      <div class="card">
+        <div class="card-title">
+          <span>Datos Fiscales Oficiales INEGI (CFDI 4.0)</span>
+          <button type="button" class="btn" style="background:#e0e7ff; color:#3730a3;" onclick="copyFiscalData()">📋 Copiar Ficha</button>
         </div>
-        <div class="metric-card spent">
-          <div class="metric-label">Total Gastado</div>
-          <div class="metric-val" id="metric-spent" style="color: var(--accent);">$0.00</div>
-        </div>
-        <div class="metric-card balance">
-          <div class="metric-label">Saldo Disponible</div>
-          <div class="metric-val" id="metric-balance" style="color: var(--success);">$0.00</div>
-        </div>
-        <div class="metric-card allowance">
-          <div class="metric-label">Margen 20% (Factura Tarjeta)</div>
-          <div class="metric-val" id="metric-allowance" style="color: var(--info);">$0.00</div>
-          <small style="font-size: 0.7rem; color: var(--text-muted);">Sin comprobante requerido</small>
-        </div>
-        <div class="metric-card unbilled">
-          <div class="metric-label">Sin Factura Real / Por Reintegrar</div>
-          <div class="metric-val" id="metric-net-unbilled" style="color: var(--danger);">$0.00</div>
-          <small style="font-size: 0.7rem; color: var(--text-muted);" id="unbilled-subtext">Restando beneficio del 20%</small>
+        <div class="grid">
+          <div><strong>RFC:</strong> INE0804164Z7</div>
+          <div><strong>Razón Social:</strong> INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA</div>
+          <div><strong>Régimen:</strong> 603 - Personas Morales con Fines no Lucrativos</div>
+          <div><strong>C.P. Fiscal:</strong> 20276</div>
+          <div style="grid-column: 1 / -1;"><strong>Domicilio:</strong> Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Fondos Asignados de Comisión</div>
+        <div class="card-title">Subir Factura o Ticket para Validación y Autocompletado</div>
+        
+        <div class="drop-zone" onclick="document.getElementById('invoiceFileInput').click()">
+          <div style="font-size: 2rem;">📷 / 📄</div>
+          <strong>Toca aquí para tomar foto o cargar PDF / XML</strong>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Detecta automáticamente si es restaurante/hotel, extrae el importe y previene duplicados</p>
+          <input type="file" id="invoiceFileInput" style="display:none;" accept="image/*,application/pdf,text/xml,.xml" onchange="processUploadedInvoice(event)">
+        </div>
+
+        <div id="ocr-loader" style="display:none; text-align:center; margin-top:15px; color:var(--info); font-weight:600;">
+          ⏳ Leyendo comprobante y analizando establecimiento... por favor espera.
+        </div>
+
+        <div id="dup-warning" class="dup-alert">
+          ⚠️ <strong>¡Factura posiblemente duplicada!</strong> Ya existe un gasto registrado con este mismo establecimiento, importe o folio.
+        </div>
+
+        <div id="validation-report" style="display:none; margin-top:20px;">
+          <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--primary);">Diagnóstico del Comprobante:</h3>
+          
+          <div style="border: 1px solid var(--border); border-radius: 6px; background: white;">
+            <div class="verification-item">
+              <div><strong>Concepto / Establecimiento detectado:</strong> <span id="res-vendor-text" style="color: var(--primary); font-weight: bold;">-</span></div>
+              <span id="res-vendor-pill" class="status-pill pill-ok">Listo</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Importe Total:</strong> <span id="res-amount-text" style="font-weight: bold; color: var(--success);">$0.00</span></div>
+              <span id="res-amount-pill" class="status-pill pill-ok">Listo</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Folio / UUID Fiscal:</strong> <span id="res-uuid-text">No detectado</span></div>
+              <span id="res-uuid-pill" class="status-pill pill-wait">Info</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>RFC INEGI (INE0804164Z7):</strong> <span id="res-rfc-text">No detectado</span></div>
+              <span id="res-rfc-pill" class="status-pill pill-wait">Pendiente</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Código Postal 20276:</strong> <span id="res-cp-text">No detectado</span></div>
+              <span id="res-cp-pill" class="status-pill pill-wait">Pendiente</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button type="button" class="btn btn-save" onclick="transferInvoiceToExpenses()">➕ Cargar a Control de Viáticos</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PESTAÑA 2: CONTROL DE VIÁTICOS ================= -->
+    <section id="tab-viaticos" class="tab-content">
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Presupuesto Asignado</div>
+          <div class="metric-val secure-val" id="metric-budget">$0.00</div>
+        </div>
+        <div class="metric-card spent">
+          <div class="metric-label">Total Gastado</div>
+          <div class="metric-val secure-val" id="metric-spent" style="color: var(--accent);">$0.00</div>
+        </div>
+        <div class="metric-card balance">
+          <div class="metric-label">Saldo Disponible (Resta)</div>
+          <div class="metric-val secure-val" id="metric-balance" style="color: var(--success);">$0.00</div>
+        </div>
+        <div class="metric-card unbilled">
+          <div class="metric-label">Sin Factura (Por comprobar)</div>
+          <div class="metric-val secure-val" id="metric-net-unbilled" style="color: var(--danger);">$0.00</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Fondos Asignados de Comisión</span>
+          <small style="font-weight: normal; color: var(--text-muted); cursor: pointer;" onclick="togglePrivacyMode()">🔒 Privacidad activa / toca para cambiar</small>
+        </div>
         <div class="grid">
           <div class="form-group">
             <label for="initial-budget">Monto Asignado ($ MXN):</label>
@@ -337,7 +448,7 @@
         <div class="grid">
           <div class="form-group">
             <label for="exp-desc">Concepto / Establecimiento:</label>
-            <input type="text" id="exp-desc" placeholder="Ej. Hotel, Restaurante...">
+            <input type="text" id="exp-desc" placeholder="Ej. Restaurante - La Cabaña, Hotel...">
           </div>
           <div class="form-group">
             <label for="exp-amount">Monto ($ MXN):</label>
@@ -346,15 +457,15 @@
           <div class="form-group">
             <label for="exp-method">Método de Pago:</label>
             <select id="exp-method">
-              <option value="Tarjeta">💳 Tarjeta (Aplica 20% no comprobable si se factura)</option>
+              <option value="Tarjeta">💳 Tarjeta</option>
               <option value="Efectivo">💵 Efectivo</option>
             </select>
           </div>
           <div class="form-group">
             <label for="exp-cat">Categoría:</label>
             <select id="exp-cat">
+              <option value="Alimentos">Alimentos / Restaurante</option>
               <option value="Hospedaje / Hotel">Hospedaje / Hotel</option>
-              <option value="Alimentos">Alimentos</option>
               <option value="Combustible / Gasolina">Combustible / Gasolina</option>
               <option value="Casetas">Casetas</option>
               <option value="Transporte Local">Transporte Local</option>
@@ -402,53 +513,36 @@
       </div>
     </section>
 
-    <!-- ================= PESTAÑA: FICHA FISCAL INEGI ================= -->
-    <section id="tab-fiscal" class="tab-content">
-      <div class="card">
-        <div class="card-title">
-          <span>Datos Fiscales Oficiales INEGI (CFDI 4.0)</span>
-          <button type="button" class="btn" style="background:#e0e7ff; color:#3730a3;" onclick="copyFiscalData()">📋 Copiar Ficha</button>
-        </div>
-        <div class="grid">
-          <div><strong>RFC:</strong> INE0804164Z7</div>
-          <div><strong>Razón Social:</strong> INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA</div>
-          <div><strong>Régimen:</strong> 603 - Personas Morales con Fines no Lucrativos</div>
-          <div><strong>C.P. Fiscal:</strong> 20276</div>
-          <div style="grid-column: 1 / -1;"><strong>Domicilio:</strong> Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= PESTAÑA: ACTIVIDADES DE GABINETE ================= -->
+    <!-- ================= PESTAÑA 3: ACTIVIDADES DE GABINETE ================= -->
     <section id="tab-gabinete" class="tab-content">
       <div class="card">
-        <div class="card-title">Actividades de gabinete[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revisa, en coordinación con el JCAD, el formato de Seguimiento y Control Estatal, verificando que las observaciones se actualicen conforme al seguimiento de la empresa, la correcta asignación de los estatus y la completitud de la información registrada.[cite: 2]</p>
-        <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-1" oninput="autoSave()"></textarea></div>
+        <div class="card-title">Actividades de gabinete</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revisa, en coordinación con el JCAD, el formato de Seguimiento y Control Estatal, verificando que las observaciones se actualicen conforme al seguimiento de la empresa, la correcta asignación de los estatus y la completitud de la información registrada.</p>
+        <div class="form-group"><label>Notas:</label><textarea id="gab-notas-1" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
-        <div class="card-title">Intercambios recibidos[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Verifica el seguimiento y la atención que se les da.[cite: 2] Si no han sido verificados en campo, agrégalos a la agenda de campo para favorecer la obtención de la información.[cite: 2] Pregunta; si hay intercambios que se encuentren pendientes de respuesta por parte de la entidad destino, con la finalidad de que te coordines con el enlace central correspondiente y agilizar la atención.[cite: 2]</p>
-        <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-2" oninput="autoSave()"></textarea></div>
+        <div class="card-title">Intercambios recibidos</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Verifica el seguimiento y la atención que se les da. Si no han sido verificados en campo, agrégalos a la agenda de campo para favorecer la obtención de la información. Pregunta; si hay intercambios que se encuentren pendientes de respuesta por parte de la entidad destino, con la finalidad de que te coordines con el enlace central correspondiente y agilizar la atención.</p>
+        <div class="form-group"><label>Notas:</label><textarea id="gab-notas-2" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
-        <div class="card-title">Estatus 1, 2, 3 y 4[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Pregunta por las empresas con el propósito de identificar las situaciones que pudieran estar retrasando la entrega del FACE y da seguimiento a las acciones necesarias para favorecer la recuperación oportuna de la información.[cite: 2]</p>
-        <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-3" oninput="autoSave()"></textarea></div>
+        <div class="card-title">Estatus 1, 2, 3 y 4</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Pregunta por las empresas con el propósito de identificar las situaciones que pudieran estar retrasando la entrega del FACE y da seguimiento a las acciones necesarias para favorecer la recuperación oportuna de la información.</p>
+        <div class="form-group"><label>Notas:</label><textarea id="gab-notas-3" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
-        <div class="card-title">Envío por correo electrónico[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Confirma que se dé seguimiento puntual a las empresas que se comprometieron en enviar su información por correo electrónico, además, solicita los correos enviados a las personas informantes y registra lo siguiente:[cite: 2]</p>
+        <div class="card-title">Envío por correo electrónico</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Confirma que se dé seguimiento puntual a las empresas que se comprometieron en enviar su información por correo electrónico, además, solicita los correos enviados a las personas informantes y registra lo siguiente:</p>
         <div class="table-responsive">
           <table>
             <thead>
               <tr>
-                <th>Número de empresas contactadas[cite: 2]</th>
-                <th>Material adjunto enviado[cite: 2]</th>
-                <th>Núm. de empresas que enviaron el FACE o directorio[cite: 2]</th>
+                <th>Número de empresas contactadas</th>
+                <th>Material adjunto enviado</th>
+                <th>Núm. de empresas que enviaron el FACE o directorio</th>
               </tr>
             </thead>
             <tbody>
@@ -460,19 +554,19 @@
             </tbody>
           </table>
         </div>
-        <div class="form-group" style="margin-top:10px;"><label>Notas:[cite: 2]</label><textarea id="gab-notas-mail" oninput="autoSave()"></textarea></div>
+        <div class="form-group" style="margin-top:10px;"><label>Notas:</label><textarea id="gab-notas-mail" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
         <div class="card-title">
-          <span>Agenda de campo[cite: 2]</span>
+          <span>Agenda de campo</span>
           <button type="button" class="btn btn-add" onclick="addAgendaRow()">➕ Fila</button>
         </div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Elabora una agenda de campo, con base en la revisión realizada, procurando visitar empresas en situación de pendiente, negativa o que provengan de un intercambio; en acompañamiento de una persona representante.[cite: 2] Da prioridad a las empresas con las que no se ha establecido contacto o las que no han respondido las solicitudes de información.[cite: 2] La agenda debe integrarse por al menos 3 empresas o más, durante tu comisión.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Elabora una agenda de campo, con base en la revisión realizada, procurando visitar empresas en situación de pendiente, negativa o que provengan de un intercambio; en acompañamiento de una persona representante. Da prioridad a las empresas con las que no se ha establecido contacto o las que no han respondido las solicitudes de información. La agenda debe integrarse por al menos 3 empresas o más, durante tu comisión.</p>
         <div class="table-responsive">
           <table id="tbl-agenda">
             <thead>
-              <tr><th>Razón social[cite: 2]</th><th>Motivo del pendiente[cite: 2]</th><th>Acciones de seguimiento[cite: 2]</th><th style="width:40px;"></th></tr>
+              <tr><th>Razón social</th><th>Motivo del pendiente</th><th>Acciones de seguimiento</th><th style="width:40px;"></th></tr>
             </thead>
             <tbody>
               <tr><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove(); autoSave();">✕</button></td></tr>
@@ -484,16 +578,16 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Asignación de los códigos de resultado[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revisa en el aplicativo, que el ECM/JCAD asigne los códigos y que estos sean congruentes con el estatus (1 al 9), asimismo que las observaciones correspondan.[cite: 2]</p>
+        <div class="card-title">Asignación de los códigos de resultado</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revisa en el aplicativo, que el ECM/JCAD asigne los códigos y que estos sean congruentes con el estatus (1 al 9), asimismo que las observaciones correspondan.</p>
         <div class="table-responsive">
           <table>
             <thead>
               <tr>
-                <th>Tootal de inconsistencias detectadas[cite: 2]</th>
-                <th>Sin código asignado[cite: 2]</th>
-                <th>El código no corresponde al estatus[cite: 2]</th>
-                <th>Sin observaciones congruentes o completas[cite: 2]</th>
+                <th>Tootal de inconsistencias detectadas</th>
+                <th>Sin código asignado</th>
+                <th>El código no corresponde al estatus</th>
+                <th>Sin observaciones congruentes o completas</th>
               </tr>
             </thead>
             <tbody>
@@ -506,25 +600,25 @@
             </tbody>
           </table>
         </div>
-        <div class="form-group" style="margin-top:10px;"><label>Notas:[cite: 2]</label><textarea id="gab-notas-codigos" oninput="autoSave()"></textarea></div>
+        <div class="form-group" style="margin-top:10px;"><label>Notas:</label><textarea id="gab-notas-codigos" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
-        <div class="card-title">Listados de empresas[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revísalos a fin de corroborar su utilización y conocer el método de actualización más usado, además, verifica las fechas compromiso para la devolución del FACE y el registro oportuno de las visitas.[cite: 2]</p>
-        <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-listados" oninput="autoSave()"></textarea></div>
+        <div class="card-title">Listados de empresas</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revísalos a fin de corroborar su utilización y conocer el método de actualización más usado, además, verifica las fechas compromiso para la devolución del FACE y el registro oportuno de las visitas.</p>
+        <div class="form-group"><label>Notas:</label><textarea id="gab-notas-listados" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
         <div class="card-title">
-          <span>Revisión de 5 FACE con código 40A[cite: 2]</span>
+          <span>Revisión de 5 FACE con código 40A</span>
           <button type="button" class="btn btn-add" onclick="addFaceRow()">➕ Fila</button>
         </div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Cuestionario captado con información completa, verificando que la información registrada sea válida, consistente y congruente, además, identifica los registros que se dieron de alta y las bajas.[cite: 2] En caso de detectar inconsistencias, informa al ECM/JCAD para que retroalimente al equipo y, en su caso, se lleven a cabo las acciones correctivas correspondientes.[cite: 2] Para esta actividad puedes apoyarte en el FD y en las instrucciones de llenado.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Cuestionario captado con información completa, verificando que la información registrada sea válida, consistente y congruente, además, identifica los registros que se dieron de alta y las bajas. En caso de detectar inconsistencias, informa al ECM/JCAD para que retroalimente al equipo y, en su caso, se lleven a cabo las acciones correctivas correspondientes. Para esta actividad puedes apoyarte en el FD y en las instrucciones de llenado.</p>
         <div class="table-responsive">
           <table id="tbl-faces-40a">
             <thead>
-              <tr><th>EMPRESAS REVISADAS[cite: 2]</th><th>INCONSISTENCIA(S) DETECTADA(S)[cite: 2]</th><th style="width:40px;"></th></tr>
+              <tr><th>EMPRESAS REVISADAS</th><th>INCONSISTENCIA(S) DETECTADA(S)</th><th style="width:40px;"></th></tr>
             </thead>
             <tbody>
               <tr><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove(); autoSave();">✕</button></td></tr>
@@ -533,23 +627,23 @@
             </tbody>
           </table>
         </div>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de requerirse, apoya en la captura o revisión de los directorios remitidos por los informantes a la oficina, verificando la congruencia de la información antes de su integración al FACE e ingresarlo al aplicativo web Conformación de Empresas.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de requerirse, apoya en la captura o revisión de los directorios remitidos por los informantes a la oficina, verificando la congruencia de la información antes de su integración al FACE e ingresarlo al aplicativo web Conformación de Empresas.</p>
       </div>
     </section>
 
-    <!-- ================= PESTAÑA: ACTIVIDADES DE CAMPO ================= -->
+    <!-- ================= PESTAÑA 4: ACTIVIDADES DE CAMPO ================= -->
     <section id="tab-campo" class="tab-content">
       <div class="card">
-        <div class="card-title">Actividades de campo – Identifica áreas de oportunidad –[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:8px;">Agenda de campo.[cite: 2] Acompaña a la persona representante durante las actividades de campo de acuerdo con la agenda prevista.[cite: 2] En los casos de empresas con negativa, brinda apoyo en la sensibilización de los informantes, puedes apoyarte de la infografía del DENUE y de tu conocimiento del sistema de consulta.[cite: 2] Retroalimenta a la persona representante en los temas que requiera.[cite: 2]</p>
+        <div class="card-title">Actividades de campo – Identifica áreas de oportunidad –</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:8px;">Agenda de campo. Acompaña a la persona representante durante las actividades de campo de acuerdo con la agenda prevista. En los casos de empresas con negativa, brinda apoyo en la sensibilización de los informantes, puedes apoyarte de la infografía del DENUE y de tu conocimiento del sistema de consulta. Retroalimenta a la persona representante en los temas que requiera.</p>
         <div class="table-responsive" style="max-width:500px;">
           <table>
-            <thead><tr><th style="width:60px;">Núm.[cite: 2]</th><th>Razón social[cite: 2]</th></tr></thead>
+            <thead><tr><th style="width:60px;">Núm.</th><th>Razón social</th></tr></thead>
             <tbody>
-              <tr><td>1.[cite: 2]</td><td><input type="text" id="campo-ag-1" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>2.[cite: 2]</td><td><input type="text" id="campo-ag-2" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>3.[cite: 2]</td><td><input type="text" id="campo-ag-3" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>4.[cite: 2]</td><td><input type="text" id="campo-ag-4" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>1.</td><td><input type="text" id="campo-ag-1" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>2.</td><td><input type="text" id="campo-ag-2" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>3.</td><td><input type="text" id="campo-ag-3" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>4.</td><td><input type="text" id="campo-ag-4" oninput="autoSave()" style="width:100%;"></td></tr>
             </tbody>
           </table>
         </div>
@@ -562,20 +656,20 @@
       </div>
     </section>
 
-    <!-- ================= PESTAÑA: CONCENTRADO Y DESCARGABLES ================= -->
+    <!-- ================= PESTAÑA 5: CONCENTRADO Y DESCARGABLES ================= -->
     <section id="tab-concentrado" class="tab-content">
       <div class="card">
-        <div class="card-title">Concentrado del resultado de las actividades de supervisión[cite: 2]</div>
+        <div class="card-title">Concentrado del resultado de las actividades de supervisión</div>
         <div class="table-responsive">
           <table>
-            <thead><tr><th>CONCEPTO[cite: 2]</th><th style="width:180px;">CANTIDAD[cite: 2]</th></tr></thead>
+            <thead><tr><th>CONCEPTO</th><th style="width:180px;">CANTIDAD</th></tr></thead>
             <tbody>
-              <tr><td>Empresas revisadas en gabinete (FACE)[cite: 2]</td><td><input type="number" id="conc-1" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>Empresas visitadas en campo[cite: 2]</td><td><input type="number" id="conc-2" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>Empresas actualizadas durante la comisión (40A)[cite: 2]</td><td><input type="number" id="conc-3" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>Empresas con negativa visitadas[cite: 2]</td><td><input type="number" id="conc-4" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>Recuperación de FACE o directorios de empresas durante la comisión[cite: 2]</td><td><input type="number" id="conc-5" oninput="autoSave()" style="width:100%;"></td></tr>
-              <tr><td>Inconsistencias detectadas en los FACE[cite: 2]</td><td><input type="number" id="conc-6" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Empresas revisadas en gabinete (FACE)</td><td><input type="number" id="conc-1" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Empresas visitadas en campo</td><td><input type="number" id="conc-2" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Empresas actualizadas durante la comisión (40A)</td><td><input type="number" id="conc-3" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Empresas con negativa visitadas</td><td><input type="number" id="conc-4" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Recuperación de FACE o directorios de empresas durante la comisión</td><td><input type="number" id="conc-5" oninput="autoSave()" style="width:100%;"></td></tr>
+              <tr><td>Inconsistencias detectadas en los FACE</td><td><input type="number" id="conc-6" oninput="autoSave()" style="width:100%;"></td></tr>
             </tbody>
           </table>
         </div>
@@ -585,35 +679,35 @@
         <div class="card-title">Evaluación de Procedimientos Operativos</div>
         <div class="table-responsive">
           <table>
-            <thead><tr><th>Pregunta[cite: 2]</th><th style="width:140px;">Respuesta[cite: 2]</th><th>OBSERVACIONES[cite: 2]</th></tr></thead>
+            <thead><tr><th>Pregunta</th><th style="width:140px;">Respuesta</th><th>OBSERVACIONES</th></tr></thead>
             <tbody>
               <tr>
-                <td>¿Se están aplicando correctamente los procedimientos definidos en la Guía del procedimiento operativo para la actualización de la conformación de empresas del RENEM?[cite: 2]</td>
+                <td>¿Se están aplicando correctamente los procedimientos definidos en la Guía del procedimiento operativo para la actualización de la conformación de empresas del RENEM?</td>
                 <td><select id="eval-proc-1" onchange="autoSave()"><option>SÍ</option><option>NO</option><option>NO APLICA</option></select></td>
                 <td><input type="text" id="eval-obs-1" oninput="autoSave()" style="width:100%;"></td>
               </tr>
               <tr>
-                <td>¿El Listado de empresas es actualizado diariamente por el TAD y lo entrega al/la ECM/JCAD?[cite: 2]</td>
+                <td>¿El Listado de empresas es actualizado diariamente por el TAD y lo entrega al/la ECM/JCAD?</td>
                 <td><select id="eval-proc-2" onchange="autoSave()"><option>SÍ</option><option>NO</option><option>NO APLICA</option></select></td>
                 <td><input type="text" id="eval-obs-2" oninput="autoSave()" style="width:100%;"></td>
               </tr>
               <tr>
-                <td>¿El formato de Seguimiento y Control Estatal se llena de forma adecuada por parte del ECM/JCAD?[cite: 2]</td>
+                <td>¿El formato de Seguimiento y Control Estatal se llena de forma adecuada por parte del ECM/JCAD?</td>
                 <td><select id="eval-proc-3" onchange="autoSave()"><option>SÍ</option><option>NO</option><option>NO APLICA</option></select></td>
                 <td><input type="text" id="eval-obs-3" oninput="autoSave()" style="width:100%;"></td>
               </tr>
               <tr>
-                <td>¿El informante está cumpliendo con la fecha compromiso de la entrega del FACE actualizado, independientemente del método de entrega?[cite: 2]</td>
+                <td>¿El informante está cumpliendo con la fecha compromiso de la entrega del FACE actualizado, independientemente del método de entrega?</td>
                 <td><select id="eval-proc-4" onchange="autoSave()"><option>Sí</option><option>NO</option><option>NO APLICA</option></select></td>
                 <td><input type="text" id="eval-obs-4" oninput="autoSave()" style="width:100%;"></td>
               </tr>
               <tr>
-                <td>¿Te reportaron dificultad con el llenado del FACE ya sea por parte del informante o del representante?[cite: 2]</td>
+                <td>¿Te reportaron dificultad con el llenado del FACE ya sea por parte del informante o del representante?</td>
                 <td><select id="eval-proc-5" onchange="autoSave()"><option>NO</option><option>Sí</option><option>NO APLICA</option></select></td>
                 <td><input type="text" id="eval-obs-5" oninput="autoSave()" style="width:100%;"></td>
               </tr>
               <tr>
-                <td>Si algún informante se resiste o se niega a participar, ¿qué razones da?[cite: 2]</td>
+                <td>Si algún informante se resiste o se niega a participar, ¿qué razones da?</td>
                 <td><select id="eval-proc-6" onchange="autoSave()"><option>NO APLICA</option><option>CON RAZONES</option></select></td>
                 <td><input type="text" id="eval-obs-6" oninput="autoSave()" placeholder="Anota razones..." style="width:100%;"></td>
               </tr>
@@ -623,18 +717,18 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Descargables (Aplicativo Web Conformación de Empresas)[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Ingresa al aplicativo web, en la pestaña descargables, y llena la siguiente información:[cite: 2]</p>
+        <div class="card-title">Descargables (Aplicativo Web Conformación de Empresas)</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Ingresa al aplicativo web, en la pestaña descargables, y llena la siguiente información:</p>
         <div class="table-responsive">
           <table>
             <thead>
               <tr>
-                <th colspan="2">¿Se tienen archivos descargables?[cite: 2]</th>
-                <th>Número de archivos[cite: 2]</th>
-                <th colspan="2">¿El FACE se actualizó en la CE con el directorio enviado por el informante?[cite: 2]</th>
-                <th>¿Cuál es el seguimiento que se les da a los directorios (descargables)[cite: 2]</th>
+                <th colspan="2">¿Se tienen archivos descargables?</th>
+                <th>Número de archivos</th>
+                <th colspan="2">¿El FACE se actualizó en la CE con el directorio enviado por el informante?</th>
+                <th>¿Cuál es el seguimiento que se les da a los directorios (descargables)</th>
               </tr>
-              <tr><th>Sí[cite: 2]</th><th>No[cite: 2]</th><th></th><th>Sí[cite: 2]</th><th>No[cite: 2]</th><th></th></tr>
+              <tr><th>Sí</th><th>No</th><th></th><th>Sí</th><th>No</th><th></th></tr>
             </thead>
             <tbody>
               <tr>
@@ -648,7 +742,7 @@
             </tbody>
           </table>
         </div>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de detectar que no se está llevando a cabo la actualización del FACE con los directorios depositados por las empresas, brinda la retroalimentación necesaria.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de detectar que no se está llevando a cabo la actualización del FACE con los directorios depositados por las empresas, brinda la retroalimentación necesaria.</p>
       </div>
     </section>
 
@@ -661,6 +755,18 @@
       { id: 1, date: '2026-09-17', desc: 'Hotel de estancia', uuid: '', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje / Hotel', invoice: true }
     ];
     let empresaCount = 0;
+    let privacyHidden = false;
+
+    let lastDetectedAmount = 0;
+    let lastDetectedVendor = '';
+    let lastDetectedUUID = '';
+
+    function togglePrivacyMode() {
+      privacyHidden = !privacyHidden;
+      const btn = document.getElementById('btn-privacy-toggle');
+      if (btn) btn.innerText = privacyHidden ? "👁️ Mostrar Montos" : "👁️ Ocultar Montos";
+      calculateExpenses();
+    }
 
     function syncDestino(val) {
       document.getElementById('commission-destination').value = val;
@@ -694,6 +800,8 @@
       expenses.forEach((item, index) => {
         const isCard = (item.method || 'Tarjeta') === 'Tarjeta';
         const tr = document.createElement('tr');
+        const displayAmount = privacyHidden ? '••••••' : `$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        
         tr.innerHTML = `
           <td>${item.date || '-'}</td>
           <td><strong>${item.desc}</strong></td>
@@ -705,7 +813,7 @@
             </select>
           </td>
           <td>${item.cat}</td>
-          <td>$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+          <td>${displayAmount}</td>
           <td>
             <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
               <input type="checkbox" ${item.invoice ? 'checked' : ''} onchange="toggleInvoice(${index})">
@@ -766,34 +874,171 @@
     function calculateExpenses() {
       const budget = parseFloat(document.getElementById('initial-budget').value) || 0;
       let totalSpent = 0;
-      let cardInvoicedTotal = 0;
       let rawUninvoicedTotal = 0;
 
       expenses.forEach(e => {
         totalSpent += e.amount;
-        const isCard = (e.method || 'Tarjeta') === 'Tarjeta';
-        if (e.invoice) {
-          if (isCard) cardInvoicedTotal += e.amount;
-        } else {
+        if (!e.invoice) {
           rawUninvoicedTotal += e.amount;
         }
       });
 
-      const allowance = cardInvoicedTotal * 0.20;
-      const netUninvoiced = Math.max(0, rawUninvoicedTotal - allowance);
       const balance = budget - totalSpent;
 
-      document.getElementById('metric-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      document.getElementById('metric-spent').innerText = `$${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      document.getElementById('metric-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      document.getElementById('metric-allowance').innerText = `$${allowance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      document.getElementById('metric-net-unbilled').innerText = `$${netUninvoiced.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      document.getElementById('unbilled-subtext').innerText = `Sin factura: $${rawUninvoicedTotal.toFixed(2)} (Amparado: $${allowance.toFixed(2)})`;
+      if (privacyHidden) {
+        document.getElementById('metric-budget').innerText = `••••••`;
+        document.getElementById('metric-spent').innerText = `••••••`;
+        document.getElementById('metric-balance').innerText = `••••••`;
+        document.getElementById('metric-net-unbilled').innerText = `••••••`;
+      } else {
+        document.getElementById('metric-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('metric-spent').innerText = `$${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('metric-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('metric-net-unbilled').innerText = `$${rawUninvoicedTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      }
     }
 
     function copyFiscalData() {
       const text = `RFC: INE0804164Z7\nRazón Social: INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen Fiscal: 603 - Personas Morales con Fines no Lucrativos\nCódigo Postal: 20276\nUso de CFDI: G03 - Gastos en general\nDomicilio: Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.`;
       navigator.clipboard.writeText(text).then(() => alert('¡Ficha fiscal copiada al portapapeles!'));
+    }
+
+    async function processUploadedInvoice(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const loader = document.getElementById('ocr-loader');
+      const report = document.getElementById('validation-report');
+      const dupAlert = document.getElementById('dup-warning');
+      loader.style.display = 'block';
+      report.style.display = 'none';
+      dupAlert.style.display = 'none';
+
+      let textExtracted = '';
+
+      try {
+        if (file.type === 'application/pdf') {
+          textExtracted = await extractTextFromPDF(file);
+        } else if (file.type === 'text/xml' || file.name.endsWith('.xml')) {
+          textExtracted = await file.text();
+        } else {
+          const result = await Tesseract.recognize(file, 'spa');
+          textExtracted = result.data.text;
+        }
+
+        analyzeInvoiceText(textExtracted);
+      } catch (err) {
+        console.error(err);
+        alert('Error al leer el archivo. Asegúrate de que sea claro.');
+      } finally {
+        loader.style.display = 'none';
+      }
+    }
+
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + ' \n ';
+      }
+      return fullText;
+    }
+
+    function analyzeInvoiceText(text) {
+      const cleanUpper = text.toUpperCase();
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+      lastDetectedVendor = extractVendorOrRestaurant(lines, text);
+      document.getElementById('res-vendor-text').innerText = lastDetectedVendor;
+
+      const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+      if (uuidMatch) {
+        lastDetectedUUID = uuidMatch[0];
+        document.getElementById('res-uuid-text').innerText = lastDetectedUUID;
+      } else {
+        const folioMatch = text.match(/(?:Folio|Factura|Ticket No\.?)\s*[:#]?\s*([A-Za-z0-9\-]+)/i);
+        lastDetectedUUID = folioMatch ? folioMatch[1] : '';
+        document.getElementById('res-uuid-text').innerText = lastDetectedUUID || 'No detectado';
+      }
+
+      lastDetectedAmount = 0;
+      const totalMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) ||
+                         text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
+      if (totalMatch) {
+        lastDetectedAmount = parseFloat(totalMatch[1].replace(/,/g, '')) || 0;
+      }
+      document.getElementById('res-amount-text').innerText = `$${lastDetectedAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+      const hasRFC = cleanUpper.includes('INE0804164Z7');
+      setPill('res-rfc', hasRFC, hasRFC ? 'Detectado (INE0804164Z7)' : 'No detectado');
+
+      const hasCP = cleanUpper.includes('20276');
+      setPill('res-cp', hasCP, hasCP ? 'Correcto (20276)' : 'No detectado');
+
+      const dupAlert = document.getElementById('dup-warning');
+      const isDup = expenses.some(e => {
+        if (lastDetectedUUID && e.uuid && e.uuid.toLowerCase() === lastDetectedUUID.toLowerCase()) return true;
+        if (lastDetectedAmount > 0 && e.amount === lastDetectedAmount && lastDetectedVendor && e.desc.toLowerCase().includes(lastDetectedVendor.toLowerCase())) return true;
+        return false;
+      });
+      dupAlert.style.display = isDup ? 'block' : 'none';
+
+      document.getElementById('validation-report').style.display = 'block';
+    }
+
+    function extractVendorOrRestaurant(lines, rawText) {
+      const isRestaurant = /(RESTAURANT|RESTAURANTE|COMEDOR|ALIMENTOS|BODEGA|CAFE|TAQUERIA|COCINA|BISTRO|GRILL)/i.test(rawText);
+      let detected = '';
+
+      const xmlMatch = rawText.match(/<cfdi:Emisor[^>]+Nombre="([^"]+)"/i);
+      if (xmlMatch && xmlMatch[1]) {
+        detected = xmlMatch[1];
+      } else {
+        for (let line of lines) {
+          const upper = line.toUpperCase();
+          if (upper.includes('INSTITUTO') || upper.includes('INE0804164Z7') || upper.includes('CFDI') || upper.includes('FACTURA')) continue;
+          if (line.length >= 4 && !line.includes(':')) {
+            detected = line;
+            break;
+          }
+        }
+      }
+
+      if (detected) {
+        return isRestaurant && !detected.toUpperCase().includes('RESTAURANTE') ? `Restaurante - ${detected}` : detected;
+      }
+      return isRestaurant ? 'Restaurante' : 'Establecimiento Comprobado';
+    }
+
+    function setPill(idPrefix, isValid, textMessage) {
+      const textElem = document.getElementById(`${idPrefix}-text`);
+      const pillElem = document.getElementById(`${idPrefix}-pill`);
+      textElem.innerText = textMessage;
+      if (isValid) {
+        pillElem.className = 'status-pill pill-ok';
+        pillElem.innerText = 'Válido ✓';
+      } else {
+        pillElem.className = 'status-pill pill-fail';
+        pillElem.innerText = 'Atención ✕';
+      }
+    }
+
+    function transferInvoiceToExpenses() {
+      switchTab('tab-viaticos');
+      if (lastDetectedAmount > 0) document.getElementById('exp-amount').value = lastDetectedAmount;
+      document.getElementById('exp-desc').value = lastDetectedVendor;
+      document.getElementById('exp-uuid').value = lastDetectedUUID || '';
+      document.getElementById('exp-invoice').checked = true;
+
+      if (lastDetectedVendor.toLowerCase().includes('restaurante')) {
+        document.getElementById('exp-cat').value = 'Alimentos';
+      }
+
+      window.scrollTo({ top: 380, behavior: 'smooth' });
     }
 
     function createEmpresaBlock(num) {
@@ -816,14 +1061,14 @@
             ${num > 1 ? `<button type="button" class="btn btn-danger" onclick="this.closest('.card').remove(); autoSave();">Eliminar Empresa</button>` : ''}
           </div>
           <div class="grid">
-            <div class="form-group"><label>Razón social:[cite: 2]</label><input type="text" id="emp-${num}-rs" oninput="autoSave()"></div>
-            <div class="form-group"><label>Motivo de la visita (negativa, intercambio o pendiente por…):[cite: 2]</label><input type="text" id="emp-${num}-motivo" oninput="autoSave()"></div>
-            <div class="form-group"><label>Nombre del Representante:[cite: 2]</label><input type="text" id="emp-${num}-rep" oninput="autoSave()"></div>
+            <div class="form-group"><label>Razón social:</label><input type="text" id="emp-${num}-rs" oninput="autoSave()"></div>
+            <div class="form-group"><label>Motivo de la visita (negativa, intercambio o pendiente por…):</label><input type="text" id="emp-${num}-motivo" oninput="autoSave()"></div>
+            <div class="form-group"><label>Nombre del Representante:</label><input type="text" id="emp-${num}-rep" oninput="autoSave()"></div>
             <div class="form-group">
-              <label>El FACE es actualizado por:[cite: 2]</label>
+              <label>El FACE es actualizado por:</label>
               <div style="display:flex; gap:12px; padding-top:6px;">
-                <label><input type="radio" name="face-by-${num}" value="Informante" onchange="autoSave()"> el informante[cite: 2]</label>
-                <label><input type="radio" name="face-by-${num}" value="Representante" onchange="autoSave()"> por el representante del INEGI[cite: 2]</label>
+                <label><input type="radio" name="face-by-${num}" value="Informante" onchange="autoSave()"> el informante</label>
+                <label><input type="radio" name="face-by-${num}" value="Representante" onchange="autoSave()"> por el representante del INEGI</label>
               </div>
             </div>
           </div>
@@ -831,12 +1076,12 @@
           <div class="table-responsive" style="margin-top:10px;">
             <table>
               <thead>
-                <tr><th>ASPECTOS OBSERVABLES[cite: 2]</th><th>CUMPLE[cite: 2]</th><th>PARCIALMENTE[cite: 2]</th><th>NO CUMPLE[cite: 2]</th></tr>
+                <tr><th>ASPECTOS OBSERVABLES</th><th>CUMPLE</th><th>PARCIALMENTE</th><th>NO CUMPLE</th></tr>
               </thead>
               <tbody>
                 ${items.map((q, idx) => `
                   <tr>
-                    <td>${q}[cite: 2]</td>
+                    <td>${q}</td>
                     <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="Cumple" onchange="autoSave()"></td>
                     <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="Parcialmente" onchange="autoSave()"></td>
                     <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="No cumple" onchange="autoSave()"></td>
@@ -847,12 +1092,12 @@
           </div>
 
           <div class="grid" style="margin-top:12px;">
-            <div class="form-group" style="grid-column:1/-1;"><label>¿Qué opinión tiene la persona informante sobre la guía de llenado del FACE respecto a su utilidad, presentación, estructura y claridad? Describe:[cite: 2]</label><textarea id="emp-${num}-opinion" oninput="autoSave()"></textarea></div>
-            <div class="form-group"><label>¿Proporcionaste retroalimentación a la persona informante o al personal de la estructura? Describe:[cite: 2]</label><input type="text" id="emp-${num}-retro-desc" placeholder="Describe..." oninput="autoSave()"></div>
-            <div class="form-group"><label>¿El responsable del llenado del FACE comprende su manejo y la información que se solicitada? ¿Qué variables no comprende?[cite: 2]</label><input type="text" id="emp-${num}-comp-vars" placeholder="Enlístalas a continuación..." oninput="autoSave()"></div>
-            <div class="form-group"><label>¿Detectaste errores recurrentes durante el llenado del FACE? Enlista los errores:[cite: 2]</label><input type="text" id="emp-${num}-err-desc" placeholder="Enlista los errores..." oninput="autoSave()"></div>
-            <div class="form-group"><label>*Describe lo que no aclaró:[cite: 2]</label><input type="text" id="emp-${num}-no-aclaro" oninput="autoSave()"></div>
-            <div class="form-group" style="grid-column:1/-1;"><label>Notas:[cite: 2]</label><textarea id="emp-${num}-notas" oninput="autoSave()"></textarea></div>
+            <div class="form-group" style="grid-column:1/-1;"><label>¿Qué opinión tiene la persona informante sobre la guía de llenado del FACE respecto a su utilidad, presentación, estructura y claridad? Describe:</label><textarea id="emp-${num}-opinion" oninput="autoSave()"></textarea></div>
+            <div class="form-group"><label>¿Proporcionaste retroalimentación a la persona informante o al personal de la estructura? Describe:</label><input type="text" id="emp-${num}-retro-desc" placeholder="Describe..." oninput="autoSave()"></div>
+            <div class="form-group"><label>¿El responsable del llenado del FACE comprende su manejo y la información que se solicitada? ¿Qué variables no comprende?</label><input type="text" id="emp-${num}-comp-vars" placeholder="Enlístalas a continuación..." oninput="autoSave()"></div>
+            <div class="form-group"><label>¿Detectaste errores recurrentes durante el llenado del FACE? Enlista los errores:</label><input type="text" id="emp-${num}-err-desc" placeholder="Enlista los errores..." oninput="autoSave()"></div>
+            <div class="form-group"><label>*Describe lo que no aclaró:</label><input type="text" id="emp-${num}-no-aclaro" oninput="autoSave()"></div>
+            <div class="form-group" style="grid-column:1/-1;"><label>Notas:</label><textarea id="emp-${num}-notas" oninput="autoSave()"></textarea></div>
           </div>
         </div>
       `;
@@ -875,16 +1120,12 @@
       tr.innerHTML = `<td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><input type="text" oninput="autoSave()" style="width:100%;"></td><td><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove(); autoSave();">✕</button></td>`;
     }
 
-    // =======================================================
-    // GENERADOR DIRECTO DE WORD NATIVO (.DOC COMPATIBLE)
-    // =======================================================
     function downloadWordDocument() {
       const sup = document.getElementById('gen-supervisor').value || 'Comisionado';
       const ce = document.getElementById('gen-ce').value || 'Estatal';
       const per = document.getElementById('gen-periodo').value || '';
       const email = document.getElementById('gen-email').value || '';
 
-      // Construcción de tablas de viáticos
       let viaticosRows = '';
       expenses.forEach(e => {
         viaticosRows += `
@@ -906,8 +1147,8 @@
           <meta charset='utf-8'>
           <title>Guía de Supervisión RENEM 2026</title>
           <style>
-            body { font-family: Arial, sans-serif; font-size: 11pt; }
-            h2, h3, h4 { color: #1B365D; margin-top: 15px; margin-bottom: 5px; }
+            body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; }
+            h2, h3, h4 { color: #1B365D; margin-top: 14px; margin-bottom: 5px; }
             table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 12px; }
             th { background-color: #E2E8F0; border: 1px solid #000; padding: 6px; font-weight: bold; text-align: left; }
             td { border: 1px solid #000; padding: 6px; }
@@ -930,9 +1171,6 @@
           <h3>Objetivos</h3>
           <p>• Dar seguimiento a la aplicación de la estrategia operativa establecida para la actualización de la conformación de empresas, mediante la observación del uso adecuado de los formatos de control establecidos.<br>
           • Detectar áreas de oportunidad en la estrategia operativa, los procedimientos y los instrumentos de captación de información, mediante el acompañamiento a las personas representantes que participan en las actividades establecidas para la actualización de la conformación de empresas.</p>
-
-          <h3>Instrucciones generales</h3>
-          <p>Compañera(o), el primer día de tu comisión preséntate con el/la SEE y JDEERA para informarles el propósito y periodo de tu visita, el área de adscripción en oficinas centrales y los requerimientos necesarios para el cumplimiento de tu comisión. Durante tu encomienda, reparte las actividades de campo y gabinete como se te vayan acomodando, sin perder de vista que todas ellas deben llevarse a cabo.</p>
 
           <h3>Actividades de gabinete</h3>
           <p><strong>Revisa el formato de Seguimiento y Control Estatal - Notas:</strong><br>${document.getElementById('gab-notas-1').value || 'Sin notas'}</p>
@@ -999,7 +1237,7 @@
             ${viaticosRows}
           </table>
 
-          <br><br><br>
+          <br><br>
           <table style="border:none; width:100%;">
             <tr style="border:none;">
               <td style="border:none; text-align:center; width:50%;">
@@ -1010,7 +1248,7 @@
               <td style="border:none; text-align:center; width:50%;">
                 __________________________________________<br>
                 <strong>SEE / JDEERA / ECM</strong><br>
-                Recibido y Sello de la Coordinación Estatal
+                Recibido y Sello
               </td>
             </tr>
           </table>
@@ -1029,9 +1267,6 @@
       document.body.removeChild(downloadLink);
     }
 
-    // =======================================================
-    // PERSISTENCIA INTELIGENTE (LOCALSTORAGE INMEDIATO)
-    // =======================================================
     function collectAllData() {
       const data = {
         supervisor: document.getElementById('gen-supervisor').value,
@@ -1067,12 +1302,12 @@
 
     function autoSave() {
       const data = collectAllData();
-      localStorage.setItem('RENEM_2026_CLEAN_DATA', JSON.stringify(data));
+      localStorage.setItem('RENEM_2026_FINAL_DOC', JSON.stringify(data));
     }
 
     function saveToStorage(notify = false) {
       autoSave();
-      if (notify) alert('¡Información guardada con éxito en este dispositivo!');
+      if (notify) alert('¡Información guardada con éxito en el dispositivo!');
     }
 
     function restoreData(data) {
@@ -1152,7 +1387,7 @@
         });
         alert(`¡Información de ${sup} sincronizada con éxito en la nube!`);
       } catch (err) {
-        alert("Error de conexión. Tus datos están seguros en tu navegador.");
+        alert("Error de conexión. Tus datos están guardados en tu equipo.");
       } finally {
         btn.innerText = "☁️ Sincronizar Nube";
         btn.disabled = false;
@@ -1160,9 +1395,13 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+      }
+
       for (let i = 1; i <= 4; i++) addEmpresaCard();
 
-      const saved = localStorage.getItem('RENEM_2026_CLEAN_DATA');
+      const saved = localStorage.getItem('RENEM_2026_FINAL_DOC');
       if (saved) {
         try { restoreData(JSON.parse(saved)); } catch(e) { renderExpenses(); }
       } else {
