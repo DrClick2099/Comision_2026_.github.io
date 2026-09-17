@@ -345,9 +345,13 @@
       </div>
       <div class="metrics-widget" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
    <div class="metric-cell">
-    <span class="metric-cell-label">Por Día (5.5 d)</span>
+    <span class="metric-cell-label">Por Día (5 d)</span>
     <span class="metric-cell-val" id="m-daily" style="color: var(--accent);">$0.00</span>
   </div>
+  <div class="metric-cell">
+  <span class="metric-cell-label">Medio Día (0.5 d)</span>
+  <span class="metric-cell-val" id="m-half-day" style="color: var(--accent);">$0.00</span>
+</div>
 </div>
     </div>
 
@@ -564,6 +568,13 @@
   const balance = budget - spent;
   const days = 5.5; // Días de comisión
   const dailyAvailable = Math.max(0, balance / days);
+  const halfDayAvailable = dailyAvailable / 2;
+
+if (isPrivate) {
+  document.getElementById('m-half-day').innerText = '••••••';
+} else {
+  document.getElementById('m-half-day').innerText = `$${halfDayAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+}
 
   if (isPrivate) {
     document.getElementById('m-budget').innerText = '••••••';
