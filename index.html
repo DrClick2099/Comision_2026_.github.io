@@ -343,6 +343,24 @@
         <span class="metric-cell-label">Sin Factura</span>
         <span class="metric-cell-val" id="m-unbilled" style="color: var(--danger);">$0.00</span>
       </div>
+      <div class="metrics-widget" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+  <div class="metric-cell">
+    <span class="metric-cell-label">Presupuesto</span>
+    <span class="metric-cell-val" id="m-budget">$0.00</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-cell-label">Disponible</span>
+    <span class="metric-cell-val" id="m-balance" style="color: var(--success);">$0.00</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-cell-label">Por Día (5.5 d)</span>
+    <span class="metric-cell-val" id="m-daily" style="color: var(--accent);">$0.00</span>
+  </div>
+  <div class="metric-cell">
+    <span class="metric-cell-label">Sin Factura</span>
+    <span class="metric-cell-val" id="m-unbilled" style="color: var(--danger);">$0.00</span>
+  </div>
+</div>
     </div>
 
     <!-- Comisionado e Info -->
@@ -520,30 +538,34 @@
       }
     }
 
-    function recalc() {
-      const budget = parseFloat(document.getElementById('c-budget').value) || 0;
-      let spent = 0;
-      let unbilled = 0;
+   function recalc() {
+  const budget = parseFloat(document.getElementById('c-budget').value) || 0;
+  let spent = 0;
+  let unbilled = 0;
 
-      expenses.forEach(e => {
-        spent += e.amount;
-        if (!e.invoice) unbilled += e.amount;
-      });
+  expenses.forEach(e => {
+    spent += e.amount;
+    if (!e.invoice) unbilled += e.amount;
+  });
 
-      const balance = budget - spent;
+  const balance = budget - spent;
+  const days = 5.5; // Días de comisión
+  const dailyAvailable = Math.max(0, balance / days);
 
-      if (isPrivate) {
-        document.getElementById('m-budget').innerText = '••••••';
-        document.getElementById('m-spent').innerText = '••••••';
-        document.getElementById('m-balance').innerText = '••••••';
-        document.getElementById('m-unbilled').innerText = '••••••';
-      } else {
-        document.getElementById('m-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('m-spent').innerText = `$${spent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('m-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('m-unbilled').innerText = `$${unbilled.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-      }
-    }
+  if (isPrivate) {
+    document.getElementById('m-budget').innerText = '••••••';
+    document.getElementById('m-spent').innerText = '••••••';
+    document.getElementById('m-balance').innerText = '••••••';
+    document.getElementById('m-daily').innerText = '••••••';
+    document.getElementById('m-unbilled').innerText = '••••••';
+  } else {
+    document.getElementById('m-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    document.getElementById('m-spent').innerText = `$${spent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    document.getElementById('m-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    document.getElementById('m-daily').innerText = `$${dailyAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    document.getElementById('m-unbilled').innerText = `$${unbilled.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+  }
+}
 
     function copyRFC() {
       navigator.clipboard.writeText('RFC: INE0804164Z7\nINSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen: 603\nCP: 20276\nUso: G03');
