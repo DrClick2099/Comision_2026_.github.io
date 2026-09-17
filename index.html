@@ -2,683 +2,674 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control Diario de Viáticos | Comisión</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Viáticos</title>
 
-  <!-- Librerías de lectura y OCR para comprobantes -->
+  <!-- Motores de lectura y OCR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root {
-      --primary: #1b365d;
-      --primary-light: #2b5288;
-      --accent: #d97706;
-      --bg: #f4f6f9;
-      --card-bg: #ffffff;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-      --border: #d1d5db;
-      --success: #10b981;
-      --danger: #ef4444;
-      --info: #0284c7;
+      --bg: #F2F2F7;
+      --card-bg: #FFFFFF;
+      --label: #000000;
+      --secondary-label: #8E8E93;
+      --tertiary-label: #C7C7CC;
+      --separator: rgba(60, 60, 67, 0.12);
+      --accent: #007AFF;
+      --accent-soft: rgba(0, 122, 255, 0.12);
+      --success: #34C759;
+      --danger: #FF3B30;
+      --warning: #FF9500;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 50px; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --card-bg: #1C1C1E;
+        --label: #FFFFFF;
+        --secondary-label: #8E8E93;
+        --tertiary-label: #48484A;
+        --separator: rgba(84, 84, 88, 0.35);
+        --accent: #0A84FF;
+        --accent-soft: rgba(10, 132, 255, 0.18);
+      }
+    }
 
-    header {
-      background-color: var(--primary);
-      color: white;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--label);
+      line-height: 1.4;
+      padding-bottom: 40px;
+    }
+
+    /* iOS Navigation Bar */
+    .nav-bar {
       position: sticky;
       top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      background-color: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--separator);
+      z-index: 50;
+      padding: env(safe-area-inset-top, 12px) 16px 12px 16px;
     }
 
-    .top-bar {
-      max-width: 1000px;
+    @media (prefers-color-scheme: dark) {
+      .nav-bar { background-color: rgba(28, 28, 30, 0.82); }
+    }
+
+    .nav-inner {
+      max-width: 600px;
       margin: 0 auto;
-      padding: 12px 16px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
     }
 
-    .top-bar h1 { font-size: 1.1rem; font-weight: 700; }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 7px 14px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: opacity 0.2s;
-    }
-
-    .btn:hover { opacity: 0.9; }
-    .btn-save { background-color: var(--success); color: white; }
-    .btn-cloud { background-color: var(--info); color: white; }
-    .btn-privacy { background-color: #374151; color: white; }
-    .btn-add { background-color: var(--primary-light); color: white; padding: 9px 16px; font-size: 0.9rem; }
-    .btn-danger { background-color: var(--danger); color: white; padding: 4px 8px; font-size: 0.75rem; }
-
-    .container {
-      max-width: 1000px;
-      margin: 18px auto;
-      padding: 0 16px;
-    }
-
-    .card {
-      background-color: var(--card-bg);
-      border-radius: 8px;
-      padding: 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      border: 1px solid var(--border);
-    }
-
-    .card-title {
-      font-size: 1.05rem;
+    .nav-inner h1 {
+      font-size: 1.25rem;
       font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e5e7eb;
+      letter-spacing: -0.4px;
+    }
+
+    .nav-actions {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 14px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    label {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #4b5563;
-    }
-
-    input[type="text"], input[type="number"], input[type="date"], input[type="email"], select {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--primary-light);
-      box-shadow: 0 0 0 2px rgba(43,82,136,0.2);
-    }
-
-    .profile-banner {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-bottom: 18px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
       align-items: center;
     }
 
-    /* Métricas del presupuesto */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .metric-card {
-      background: white;
-      border-radius: 8px;
-      padding: 14px 16px;
-      border-left: 4px solid var(--primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .metric-card.balance { border-left-color: var(--success); }
-    .metric-card.spent { border-left-color: var(--accent); }
-    .metric-card.unbilled { border-left-color: var(--danger); }
-
-    .metric-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-    .metric-val { font-size: 1.45rem; font-weight: 700; margin-top: 4px; }
-
-    .drop-zone {
-      border: 2px dashed #93c5fd;
-      background-color: #f8fafc;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
+    .ios-link-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 500;
       cursor: pointer;
     }
-    .drop-zone:hover { background-color: #eff6ff; }
 
-    .table-responsive {
-      overflow-x: auto;
-      margin-top: 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+    .ios-link-btn:active { opacity: 0.5; }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.85rem;
-      background: white;
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--secondary-label);
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      margin: 18px 0 8px 12px;
     }
 
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid #f3f4f6;
+    /* iOS Inset Grouped Card */
+    .ios-group {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
     }
 
-    th {
-      background-color: #f8fafc;
-      color: #374151;
-      font-weight: 600;
-      white-space: nowrap;
+    /* Métricas estilo Widget */
+    .metrics-widget {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
     }
 
-    .badge-status {
-      padding: 3px 8px;
-      border-radius: 4px;
+    .metric-cell {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metric-cell-label {
       font-size: 0.75rem;
-      font-weight: 700;
+      color: var(--secondary-label);
+      font-weight: 500;
     }
-    .badge-billed { background: #d1fae5; color: #065f46; }
-    .badge-unbilled { background: #fee2e2; color: #991b1b; }
 
-    .dup-alert {
-      background-color: #fef2f2;
-      border: 1px solid #f87171;
-      color: #991b1b;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin-top: 10px;
-      font-size: 0.85rem;
-      display: none;
+    .metric-cell-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-top: 4px;
     }
+
+    /* List Rows */
+    .ios-row {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--separator);
+      font-size: 0.95rem;
+    }
+
+    .ios-row:last-child { border-bottom: none; }
+
+    .ios-row label {
+      color: var(--label);
+      font-weight: 400;
+      min-width: 105px;
+    }
+
+    .ios-row input, .ios-row select {
+      border: none;
+      background: transparent;
+      color: var(--label);
+      font-size: 0.95rem;
+      text-align: right;
+      width: 100%;
+      outline: none;
+    }
+
+    .ios-row input::placeholder {
+      color: var(--tertiary-label);
+    }
+
+    /* iOS Switch Control */
+    .switch-wrap {
+      position: relative;
+      display: inline-block;
+      width: 51px;
+      height: 31px;
+    }
+
+    .switch-wrap input { display: none; }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--tertiary-label);
+      border-radius: 31px;
+      transition: 0.3s;
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 27px;
+      width: 27px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      transition: 0.3s;
+    }
+
+    input:checked + .switch-slider {
+      background-color: var(--success);
+    }
+
+    input:checked + .switch-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Action Buttons */
+    .btn-block {
+      width: 100%;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-block:active { opacity: 0.8; }
+
+    /* Scan Box */
+    .scan-box {
+      border: 1.5px dashed var(--tertiary-label);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--card-bg);
+      margin-bottom: 12px;
+    }
+
+    .scan-box:active { background: var(--bg); }
+
+    /* Gastos List Item */
+    .expense-item {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--separator);
+    }
+
+    .expense-item:last-child { border-bottom: none; }
+
+    .expense-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .expense-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .expense-meta {
+      font-size: 0.75rem;
+      color: var(--secondary-label);
+    }
+
+    .expense-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .expense-val {
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .badge-check {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .badge-ok { background: rgba(52, 199, 89, 0.15); color: var(--success); }
+    .badge-no { background: rgba(255, 59, 48, 0.15); color: var(--danger); }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="top-bar">
-      <div>
-        <h1>Control Diario de Viáticos</h1>
-        <small style="color: #93c5fd; font-size: 0.75rem;">Comisiones en Campo • RENEM</small>
-      </div>
-      <div class="action-buttons">
-        <button type="button" class="btn btn-privacy" id="btn-privacy-toggle" onclick="togglePrivacyMode()">👁️ Ocultar Montos</button>
-        <button type="button" class="btn btn-save" onclick="saveToStorage(true)">💾 Guardar</button>
-        <button type="button" class="btn btn-cloud" onclick="syncToCloud(event)">☁️ Sincronizar en Google Sheets</button>
+  <!-- Barra de Navegación Estilo iOS -->
+  <header class="nav-bar">
+    <div class="nav-inner">
+      <h1>Viáticos</h1>
+      <div class="nav-actions">
+        <button class="ios-link-btn" id="privacy-btn" onclick="togglePrivacy()">Ocultar</button>
+        <button class="ios-link-btn" onclick="syncCloud(event)">Sincronizar</button>
       </div>
     </div>
   </header>
 
   <main class="container">
 
-    <!-- DATOS DEL COMISIONADO -->
-    <div class="profile-banner">
-      <div class="form-group">
-        <label style="color:#1e40af;">👤 Nombre del Comisionado/a:</label>
-        <input type="text" id="gen-supervisor" placeholder="Ej. Juan Pérez" oninput="autoSave()">
+    <!-- Widgets Resumen -->
+    <div class="metrics-widget">
+      <div class="metric-cell">
+        <span class="metric-cell-label">Presupuesto</span>
+        <span class="metric-cell-val" id="m-budget">$0.00</span>
       </div>
-      <div class="form-group">
-        <label style="color:#1e40af;">✉️ Correo Institucional:</label>
-        <input type="email" id="gen-email" placeholder="juan.perez@inegi.org.mx" oninput="autoSave()">
+      <div class="metric-cell">
+        <span class="metric-cell-label">Gastado</span>
+        <span class="metric-cell-val" id="m-spent" style="color: var(--warning);">$0.00</span>
       </div>
-      <div class="form-group">
-        <label style="color:#1e40af;">📍 Coordinación Estatal / Destino:</label>
-        <input type="text" id="gen-ce" placeholder="Ej. Tabasco" oninput="autoSave()">
+      <div class="metric-cell">
+        <span class="metric-cell-label">Disponible</span>
+        <span class="metric-cell-val" id="m-balance" style="color: var(--success);">$0.00</span>
       </div>
-      <div class="form-group">
-        <label style="color:#1e40af;">📅 Periodo de la Comisión:</label>
-        <input type="text" id="gen-periodo" placeholder="Ej. 21 al 26 de Septiembre de 2026" oninput="autoSave()">
-      </div>
-    </div>
-
-    <!-- MÉTRICAS EN TIEMPO REAL -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-label">Presupuesto Asignado</div>
-        <div class="metric-val" id="metric-budget">$0.00</div>
-      </div>
-      <div class="metric-card spent">
-        <div class="metric-label">Total Gastado</div>
-        <div class="metric-val" id="metric-spent" style="color: var(--accent);">$0.00</div>
-      </div>
-      <div class="metric-card balance">
-        <div class="metric-label">Saldo Disponible (Resta)</div>
-        <div class="metric-val" id="metric-balance" style="color: var(--success);">$0.00</div>
-      </div>
-      <div class="metric-card unbilled">
-        <div class="metric-label">Sin Factura (Por comprobar)</div>
-        <div class="metric-val" id="metric-net-unbilled" style="color: var(--danger);">$0.00</div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Sin Factura</span>
+        <span class="metric-cell-val" id="m-unbilled" style="color: var(--danger);">$0.00</span>
       </div>
     </div>
 
-    <!-- FONDOS ASIGNADOS -->
-    <div class="card">
-      <div class="card-title">Monto Total Otorgado</div>
-      <div class="grid">
-        <div class="form-group">
-          <label for="initial-budget">Presupuesto Inicial ($ MXN):</label>
-          <input type="number" id="initial-budget" value="14407" step="0.01" oninput="calculateExpenses(); autoSave();">
-        </div>
+    <!-- Comisionado e Info -->
+    <div class="section-title">Detalles del Comisionado</div>
+    <div class="ios-group">
+      <div class="ios-row">
+        <label>Nombre</label>
+        <input type="text" id="c-name" placeholder="Requerido" oninput="autoSave()">
+      </div>
+      <div class="ios-row">
+        <label>Correo</label>
+        <input type="email" id="c-email" placeholder="institucional" oninput="autoSave()">
+      </div>
+      <div class="ios-row">
+        <label>Destino</label>
+        <input type="text" id="c-dest" placeholder="Coordinación" oninput="autoSave()">
+      </div>
+      <div class="ios-row">
+        <label>Periodo</label>
+        <input type="text" id="c-period" placeholder="Fechas" oninput="autoSave()">
+      </div>
+      <div class="ios-row">
+        <label>Monto Asignado</label>
+        <input type="number" id="c-budget" value="14407" step="0.01" oninput="recalc(); autoSave();">
       </div>
     </div>
 
-    <!-- ESCÁNER RÁPIDO DE FACTURAS -->
-    <div class="card">
-      <div class="card-title">
-        <span>📸 Escanear Factura o Ticket</span>
-        <button type="button" class="btn" style="background:#e0e7ff; color:#3730a3;" onclick="copyFiscalData()">📋 Copiar RFC INEGI</button>
-      </div>
-
-      <div class="drop-zone" onclick="document.getElementById('invoiceFileInput').click()">
-        <div style="font-size: 1.8rem;">📷 / 📄</div>
-        <strong>Toca aquí para tomar foto del comprobante o subir archivo (PDF, XML, Imagen)</strong>
-        <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">Detecta el establecimiento/restaurante e importe automáticamente</p>
-        <input type="file" id="invoiceFileInput" style="display:none;" accept="image/*,application/pdf,text/xml,.xml" onchange="processUploadedInvoice(event)">
-      </div>
-
-      <div id="ocr-loader" style="display:none; text-align:center; margin-top:10px; color:var(--info); font-weight:600;">
-        ⏳ Leyendo comprobante... por favor espera.
-      </div>
-
-      <div id="dup-warning" class="dup-alert">
-        ⚠️ <strong>Posible duplicado:</strong> Ya existe un gasto registrado con el mismo concepto, importe o folio.
-      </div>
+    <!-- Escáner Rápido -->
+    <div class="section-title">Comprobante Rápido</div>
+    <div class="scan-box" onclick="document.getElementById('file-in').click()">
+      <div style="font-size: 1.5rem; margin-bottom: 2px;">📷</div>
+      <div style="font-weight: 500; font-size: 0.9rem;">Escanear Factura o Ticket</div>
+      <div style="font-size: 0.75rem; color: var(--secondary-label); margin-top: 2px;">Toma foto o sube un PDF / XML</div>
+      <input type="file" id="file-in" style="display:none;" accept="image/*,application/pdf,text/xml,.xml" onchange="runOCR(event)">
     </div>
+    <div id="ocr-loader" style="display:none; text-align:center; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">Leyendo comprobante...</div>
 
-    <!-- CAPTURA DIARIA DE GASTO -->
-    <div class="card">
-      <div class="card-title">Registrar Gasto del Día</div>
-      <div class="grid">
-        <div class="form-group">
-          <label for="exp-desc">Concepto / Establecimiento:</label>
-          <input type="text" id="exp-desc" placeholder="Ej. Restaurante - La Cabaña, Hotel...">
-        </div>
-        <div class="form-group">
-          <label for="exp-amount">Monto ($ MXN):</label>
-          <input type="number" id="exp-amount" placeholder="0.00" step="0.01">
-        </div>
-        <div class="form-group">
-          <label for="exp-method">Forma de Pago:</label>
-          <select id="exp-method">
-            <option value="Tarjeta">💳 Tarjeta</option>
-            <option value="Efectivo">💵 Efectivo</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="exp-cat">Categoría:</label>
-          <select id="exp-cat">
-            <option value="Alimentos">Alimentos / Restaurante</option>
-            <option value="Hospedaje / Hotel">Hospedaje / Hotel</option>
-            <option value="Combustible / Gasolina">Combustible / Gasolina</option>
-            <option value="Casetas">Casetas</option>
-            <option value="Transporte Local">Transporte Local</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="exp-date">Fecha:</label>
-          <input type="date" id="exp-date">
-        </div>
-        <div class="form-group">
-          <label for="exp-uuid">Folio / Ticket (Anti-duplicados):</label>
-          <input type="text" id="exp-uuid" placeholder="Folio fiscal o número de ticket">
-        </div>
+    <!-- Captura de Gasto -->
+    <div class="section-title">Registrar Gasto</div>
+    <div class="ios-group">
+      <div class="ios-row">
+        <label>Concepto</label>
+        <input type="text" id="g-desc" placeholder="Ej. Restaurante - La Cabaña">
       </div>
-
-      <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-        <label style="margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" id="exp-invoice" checked style="width: 18px; height: 18px;">
-          <span style="font-weight: 600;">¿Cuenta con Factura (CFDI)?</span>
+      <div class="ios-row">
+        <label>Importe ($)</label>
+        <input type="number" id="g-amount" placeholder="0.00" step="0.01">
+      </div>
+      <div class="ios-row">
+        <label>Método</label>
+        <select id="g-method">
+          <option value="Tarjeta">Tarjeta</option>
+          <option value="Efectivo">Efectivo</option>
+        </select>
+      </div>
+      <div class="ios-row">
+        <label>Categoría</label>
+        <select id="g-cat">
+          <option value="Alimentos">Alimentos / Restaurante</option>
+          <option value="Hospedaje">Hospedaje</option>
+          <option value="Gasolina">Combustible</option>
+          <option value="Casetas">Casetas</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Otros">Otros</option>
+        </select>
+      </div>
+      <div class="ios-row">
+        <label>Fecha</label>
+        <input type="date" id="g-date">
+      </div>
+      <div class="ios-row">
+        <label>Folio / Ticket</label>
+        <input type="text" id="g-uuid" placeholder="Opcional">
+      </div>
+      <div class="ios-row">
+        <label>Factura (CFDI)</label>
+        <label class="switch-wrap">
+          <input type="checkbox" id="g-invoice" checked>
+          <span class="switch-slider"></span>
         </label>
-        <button type="button" class="btn btn-add" onclick="addExpense()">➕ Agregar a la Bitácora</button>
       </div>
     </div>
 
-    <!-- BITÁCORA DETALLADA -->
-    <div class="card">
-      <div class="card-title">Desglose de Gastos Registrados</div>
-      <div class="table-responsive">
-        <table id="expenses-table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Concepto / Establecimiento</th>
-              <th>Folio</th>
-              <th>Método</th>
-              <th>Categoría</th>
-              <th>Importe</th>
-              <th>Factura</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="expenses-tbody"></tbody>
-        </table>
-      </div>
+    <button class="btn-block" onclick="addExpense()">Agregar Desembolso</button>
+
+    <!-- Bitácora -->
+    <div class="section-title" style="margin-top: 24px;">Historial de Gastos</div>
+    <div class="ios-group" id="expenses-list">
+      <!-- Elementos dinámicos -->
+    </div>
+
+    <div style="text-align: center; margin-top: 14px;">
+      <button class="ios-link-btn" onclick="copyRFC()">Copiar RFC del INEGI</button>
     </div>
 
   </main>
 
   <script>
-    // PEGA AQUÍ LA URL DE GOOGLE APPS SCRIPT:
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/TU_ID_AQUI/exec";
 
     let expenses = [
-      { id: 1, date: '2026-09-17', desc: 'Hotel estancia', uuid: 'F-84920', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje / Hotel', invoice: true }
+      { id: 1, date: '2026-09-17', desc: 'Hotel estancia', uuid: 'F-84920', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje', invoice: true }
     ];
-    let privacyHidden = false;
+    let isPrivate = false;
 
-    // Modo Privacidad
-    function togglePrivacyMode() {
-      privacyHidden = !privacyHidden;
-      const btn = document.getElementById('btn-privacy-toggle');
-      if (btn) btn.innerText = privacyHidden ? "👁️ Mostrar Montos" : "👁️ Ocultar Montos";
-      calculateExpenses();
+    function togglePrivacy() {
+      isPrivate = !isPrivate;
+      document.getElementById('privacy-btn').innerText = isPrivate ? 'Mostrar' : 'Ocultar';
+      recalc();
+      renderExpenses();
     }
 
     function renderExpenses() {
-      const tbody = document.getElementById('expenses-tbody');
-      tbody.innerHTML = '';
-      expenses.forEach((item, index) => {
-        const isCard = (item.method || 'Tarjeta') === 'Tarjeta';
-        const tr = document.createElement('tr');
-        const displayAmount = privacyHidden ? '••••••' : `$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      const list = document.getElementById('expenses-list');
+      list.innerHTML = '';
 
-        tr.innerHTML = `
-          <td>${item.date || '-'}</td>
-          <td><strong>${item.desc}</strong></td>
-          <td><small style="color:var(--text-muted); font-family:monospace;">${item.uuid || '-'}</small></td>
-          <td>
-            <select onchange="changePaymentMethod(${index}, this.value)" style="padding:4px 6px; font-size:0.8rem;">
-              <option value="Tarjeta" ${isCard ? 'selected' : ''}>💳 Tarjeta</option>
-              <option value="Efectivo" ${!isCard ? 'selected' : ''}>💵 Efectivo</option>
-            </select>
-          </td>
-          <td>${item.cat}</td>
-          <td>${displayAmount}</td>
-          <td>
-            <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
-              <input type="checkbox" ${item.invoice ? 'checked' : ''} onchange="toggleInvoice(${index})">
-              <span class="badge-status ${item.invoice ? 'badge-billed' : 'badge-unbilled'}">
-                ${item.invoice ? '✓ Sí' : '✕ No'}
-              </span>
-            </label>
-          </td>
-          <td><button type="button" class="btn btn-danger" onclick="deleteExpense(${index})">✕</button></td>
+      if (expenses.length === 0) {
+        list.innerHTML = `<div style="padding:16px; text-align:center; color:var(--secondary-label); font-size:0.85rem;">No hay gastos registrados</div>`;
+        return;
+      }
+
+      expenses.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'expense-item';
+        const displayAmount = isPrivate ? '••••••' : `$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+        row.innerHTML = `
+          <div class="expense-left">
+            <span class="expense-name">${item.desc}</span>
+            <span class="expense-meta">${item.date || '-'} • ${item.cat} • ${item.method}</span>
+          </div>
+          <div class="expense-right">
+            <div style="text-align:right;">
+              <div class="expense-val">${displayAmount}</div>
+              <span class="badge-check ${item.invoice ? 'badge-ok' : 'badge-no'}">${item.invoice ? 'Con Factura' : 'Sin Factura'}</span>
+            </div>
+            <button class="del-btn" onclick="delExpense(${index})">✕</button>
+          </div>
         `;
-        tbody.appendChild(tr);
+        list.appendChild(row);
       });
-      calculateExpenses();
     }
 
     function addExpense() {
-      const desc = document.getElementById('exp-desc').value.trim();
-      const amount = parseFloat(document.getElementById('exp-amount').value);
-      const method = document.getElementById('exp-method').value;
-      const cat = document.getElementById('exp-cat').value;
-      const date = document.getElementById('exp-date').value;
-      const uuid = document.getElementById('exp-uuid').value.trim();
-      const invoice = document.getElementById('exp-invoice').checked;
+      const desc = document.getElementById('g-desc').value.trim();
+      const amount = parseFloat(document.getElementById('g-amount').value);
+      const method = document.getElementById('g-method').value;
+      const cat = document.getElementById('g-cat').value;
+      const date = document.getElementById('g-date').value;
+      const uuid = document.getElementById('g-uuid').value.trim();
+      const invoice = document.getElementById('g-invoice').checked;
 
       if (!desc || isNaN(amount) || amount <= 0) {
         alert('Ingresa concepto y monto válido.');
         return;
       }
 
-      // Alerta de duplicados
-      const isDup = expenses.some(e => {
-        if (uuid && e.uuid && e.uuid.toLowerCase() === uuid.toLowerCase()) return true;
-        if (e.amount === amount && e.desc.toLowerCase() === desc.toLowerCase()) return true;
-        return false;
-      });
-
-      if (isDup && !confirm(`⚠️ Posible duplicado: ya existe un gasto de "${desc}" por $${amount}. ¿Deseas agregarlo de todas formas?`)) {
-        return;
-      }
-
       expenses.push({ id: Date.now(), date, desc, uuid, amount, method, cat, invoice });
-      document.getElementById('exp-desc').value = '';
-      document.getElementById('exp-amount').value = '';
-      document.getElementById('exp-uuid').value = '';
+
+      document.getElementById('g-desc').value = '';
+      document.getElementById('g-amount').value = '';
+      document.getElementById('g-uuid').value = '';
+
+      recalc();
       renderExpenses();
       autoSave();
     }
 
-    function deleteExpense(index) {
-      if (confirm('¿Eliminar este gasto?')) {
-        expenses.splice(index, 1);
+    function delExpense(i) {
+      if (confirm('¿Eliminar registro?')) {
+        expenses.splice(i, 1);
+        recalc();
         renderExpenses();
         autoSave();
       }
     }
 
-    function toggleInvoice(index) {
-      expenses[index].invoice = !expenses[index].invoice;
-      renderExpenses();
-      autoSave();
-    }
-
-    function changePaymentMethod(index, val) {
-      expenses[index].method = val;
-      renderExpenses();
-      autoSave();
-    }
-
-    function calculateExpenses() {
-      const budget = parseFloat(document.getElementById('initial-budget').value) || 0;
-      let totalSpent = 0;
-      let rawUninvoicedTotal = 0;
+    function recalc() {
+      const budget = parseFloat(document.getElementById('c-budget').value) || 0;
+      let spent = 0;
+      let unbilled = 0;
 
       expenses.forEach(e => {
-        totalSpent += e.amount;
-        if (!e.invoice) {
-          rawUninvoicedTotal += e.amount;
-        }
+        spent += e.amount;
+        if (!e.invoice) unbilled += e.amount;
       });
 
-      const balance = budget - totalSpent;
+      const balance = budget - spent;
 
-      if (privacyHidden) {
-        document.getElementById('metric-budget').innerText = `••••••`;
-        document.getElementById('metric-spent').innerText = `••••••`;
-        document.getElementById('metric-balance').innerText = `••••••`;
-        document.getElementById('metric-net-unbilled').innerText = `••••••`;
+      if (isPrivate) {
+        document.getElementById('m-budget').innerText = '••••••';
+        document.getElementById('m-spent').innerText = '••••••';
+        document.getElementById('m-balance').innerText = '••••••';
+        document.getElementById('m-unbilled').innerText = '••••••';
       } else {
-        document.getElementById('metric-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('metric-spent').innerText = `$${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('metric-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-        document.getElementById('metric-net-unbilled').innerText = `$${rawUninvoicedTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('m-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('m-spent').innerText = `$${spent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('m-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        document.getElementById('m-unbilled').innerText = `$${unbilled.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
       }
     }
 
-    function copyFiscalData() {
-      const text = `RFC: INE0804164Z7\nRazón Social: INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen Fiscal: 603 - Personas Morales con Fines no Lucrativos\nCódigo Postal: 20276\nUso de CFDI: G03 - Gastos en general\nDomicilio: Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.`;
-      navigator.clipboard.writeText(text).then(() => alert('¡Ficha fiscal copiada al portapapeles!'));
+    function copyRFC() {
+      navigator.clipboard.writeText('RFC: INE0804164Z7\nINSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen: 603\nCP: 20276\nUso: G03');
+      alert('Datos fiscales del INEGI copiados.');
     }
 
-    // ==========================================
-    // ESCÁNER Y DETECCIÓN AUTOMÁTICA
-    // ==========================================
-    async function processUploadedInvoice(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+    /* OCR y Extracción */
+    async function runOCR(e) {
+      const f = e.target.files[0];
+      if (!f) return;
 
       const loader = document.getElementById('ocr-loader');
-      const dupAlert = document.getElementById('dup-warning');
       loader.style.display = 'block';
-      dupAlert.style.display = 'none';
-
-      let textExtracted = '';
 
       try {
-        if (file.type === 'application/pdf') {
-          const ab = await file.arrayBuffer();
+        let text = '';
+        if (f.type === 'application/pdf') {
+          const ab = await f.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const tc = await page.getTextContent();
-            textExtracted += tc.items.map(item => item.str).join(' ') + ' \n ';
+            text += tc.items.map(s => s.str).join(' ') + ' ';
           }
-        } else if (file.type === 'text/xml' || file.name.endsWith('.xml')) {
-          textExtracted = await file.text();
+        } else if (f.name.endsWith('.xml')) {
+          text = await f.text();
         } else {
-          const result = await Tesseract.recognize(file, 'spa');
-          textExtracted = result.data.text;
+          const res = await Tesseract.recognize(f, 'spa');
+          text = res.data.text;
         }
 
-        analyzeAndFillForm(textExtracted);
+        fillFromText(text);
       } catch (err) {
-        alert('No se pudo leer el archivo. Intenta con una imagen más clara.');
+        alert('No se pudo leer el comprobante.');
       } finally {
         loader.style.display = 'none';
       }
     }
 
-    function analyzeAndFillForm(text) {
+    function fillFromText(text) {
+      const isRest = /(RESTAURANT|RESTAURANTE|COMEDOR|ALIMENTOS|BODEGA|CAFE|TAQUERIA|COCINA|BISTRO|GRILL)/i.test(text);
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-      
-      // 1. Detectar si es Restaurante o Establecimiento
-      const isRestaurant = /(RESTAURANT|RESTAURANTE|COMEDOR|ALIMENTOS|BODEGA|CAFE|TAQUERIA|COCINA|BISTRO|GRILL)/i.test(text);
-      let detectedVendor = '';
+      let vendor = '';
 
-      const xmlMatch = text.match(/<cfdi:Emisor[^>]+Nombre="([^"]+)"/i);
-      if (xmlMatch && xmlMatch[1]) {
-        detectedVendor = xmlMatch[1];
+      const xmlM = text.match(/<cfdi:Emisor[^>]+Nombre="([^"]+)"/i);
+      if (xmlM && xmlM[1]) {
+        vendor = xmlM[1];
       } else {
-        for (let line of lines) {
-          const u = line.toUpperCase();
+        for (let l of lines) {
+          const u = l.toUpperCase();
           if (u.includes('INSTITUTO') || u.includes('INE0804164Z7') || u.includes('CFDI') || u.includes('FACTURA')) continue;
-          if (line.length >= 4 && !line.includes(':')) {
-            detectedVendor = line;
+          if (l.length >= 4 && !l.includes(':')) {
+            vendor = l;
             break;
           }
         }
       }
 
-      if (detectedVendor) {
-        document.getElementById('exp-desc').value = isRestaurant && !detectedVendor.toUpperCase().includes('RESTAURANTE') ? `Restaurante - ${detectedVendor}` : detectedVendor;
+      if (vendor) {
+        document.getElementById('g-desc').value = isRest && !vendor.toUpperCase().includes('RESTAURANTE') ? `Restaurante - ${vendor}` : vendor;
       } else {
-        document.getElementById('exp-desc').value = isRestaurant ? 'Restaurante - ' : 'Consumo / Gasto';
+        document.getElementById('g-desc').value = isRest ? 'Restaurante - ' : 'Consumo';
       }
 
-      if (isRestaurant) {
-        document.getElementById('exp-cat').value = 'Alimentos';
+      if (isRest) document.getElementById('g-cat').value = 'Alimentos';
+
+      const totMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) || text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
+      if (totMatch) {
+        document.getElementById('g-amount').value = parseFloat(totMatch[1].replace(/,/g, ''));
       }
 
-      // 2. Extraer Importe
-      const totalMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) ||
-                         text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
-      if (totalMatch) {
-        document.getElementById('exp-amount').value = parseFloat(totalMatch[1].replace(/,/g, '')) || '';
+      const uuidM = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+      if (uuidM) {
+        document.getElementById('g-uuid').value = uuidM[0];
       }
 
-      // 3. Extraer Folio / UUID
-      const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-      if (uuidMatch) {
-        document.getElementById('exp-uuid').value = uuidMatch[0];
-      }
-
-      document.getElementById('exp-invoice').checked = true;
-
-      // Alerta de duplicados preventiva
-      const currentDesc = document.getElementById('exp-desc').value;
-      const currentAmount = parseFloat(document.getElementById('exp-amount').value) || 0;
-      const dupAlert = document.getElementById('dup-warning');
-      const isDup = expenses.some(e => (uuidMatch && e.uuid === uuidMatch[0]) || (e.amount === currentAmount && e.desc.toLowerCase() === currentDesc.toLowerCase()));
-      dupAlert.style.display = isDup ? 'block' : 'none';
-
-      alert('¡Comprobante leído! Los datos se cargaron al formulario de registro.');
+      document.getElementById('g-invoice').checked = true;
+      alert('Datos cargados al formulario de registro.');
     }
 
-    // ==========================================
-    // PERSISTENCIA Y GOOGLE SHEETS
-    // ==========================================
+    /* Persistencia y Sincronización */
     function autoSave() {
       const data = {
-        supervisor: document.getElementById('gen-supervisor').value,
-        email: document.getElementById('gen-email').value,
-        ce: document.getElementById('gen-ce').value,
-        periodo: document.getElementById('gen-periodo').value,
-        budget: document.getElementById('initial-budget').value,
+        name: document.getElementById('c-name').value,
+        email: document.getElementById('c-email').value,
+        dest: document.getElementById('c-dest').value,
+        period: document.getElementById('c-period').value,
+        budget: document.getElementById('c-budget').value,
         expenses: expenses
       };
-      localStorage.setItem('VIATICOS_DAILY_APP', JSON.stringify(data));
+      localStorage.setItem('VIATICOS_IOS_MIN', JSON.stringify(data));
     }
 
-    function saveToStorage(notify = false) {
-      autoSave();
-      if (notify) alert('¡Información guardada en tu teléfono/computadora!');
-    }
-
-    function restoreData() {
-      const saved = localStorage.getItem('VIATICOS_DAILY_APP');
-      if (!saved) return;
+    function restore() {
+      const s = localStorage.getItem('VIATICOS_IOS_MIN');
+      if (!s) return;
       try {
-        const d = JSON.parse(saved);
-        if (d.supervisor) document.getElementById('gen-supervisor').value = d.supervisor;
-        if (d.email) document.getElementById('gen-email').value = d.email;
-        if (d.ce) document.getElementById('gen-ce').value = d.ce;
-        if (d.periodo) document.getElementById('gen-periodo').value = d.periodo;
-        if (d.budget) document.getElementById('initial-budget').value = d.budget;
+        const d = JSON.parse(s);
+        if (d.name) document.getElementById('c-name').value = d.name;
+        if (d.email) document.getElementById('c-email').value = d.email;
+        if (d.dest) document.getElementById('c-dest').value = d.dest;
+        if (d.period) document.getElementById('c-period').value = d.period;
+        if (d.budget) document.getElementById('c-budget').value = d.budget;
         if (d.expenses) expenses = d.expenses;
       } catch (e) {}
     }
 
-    async function syncToCloud(e) {
-      const sup = document.getElementById('gen-supervisor').value.trim();
-      if (!sup) {
-        alert("Escribe el nombre del comisionado antes de sincronizar.");
+    async function syncCloud(e) {
+      const name = document.getElementById('c-name').value.trim();
+      if (!name) {
+        alert('Ingresa el nombre del comisionado.');
         return;
       }
 
       autoSave();
       const payload = {
-        supervisor: sup,
-        email: document.getElementById('gen-email').value,
-        coordinacion: document.getElementById('gen-ce').value,
-        periodo: document.getElementById('gen-periodo').value,
-        budget: document.getElementById('initial-budget').value,
+        supervisor: name,
+        email: document.getElementById('c-email').value,
+        coordinacion: document.getElementById('c-dest').value,
+        periodo: document.getElementById('c-period').value,
+        budget: document.getElementById('c-budget').value,
         expenses: expenses
       };
 
       const btn = e.target;
-      btn.innerText = "Sincronizando...";
-      btn.disabled = true;
+      btn.innerText = 'Enviando...';
 
       try {
         await fetch(GOOGLE_SCRIPT_URL, {
@@ -687,12 +678,11 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        alert(`¡Viáticos de ${sup} sincronizados con éxito en Google Sheets!`);
+        alert(`Sincronizado en Google Sheets.`);
       } catch (err) {
-        alert("Error de red. Tus datos siguen guardados localmente.");
+        alert('Error de red. Datos guardados en el teléfono.');
       } finally {
-        btn.innerText = "☁️ Sincronizar en Google Sheets";
-        btn.disabled = false;
+        btn.innerText = 'Sincronizar';
       }
     }
 
@@ -700,9 +690,10 @@
       if (window.pdfjsLib) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
       }
-      restoreData();
+      restore();
+      recalc();
       renderExpenses();
-      document.getElementById('exp-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('g-date').value = new Date().toISOString().slice(0, 10);
     });
   </script>
 </body>
