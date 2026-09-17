@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RENEM 2026 | Conformación de Empresas</title>
+  
+  <!-- PDF.js para lectura de documentos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <!-- Tesseract OCR para lectura de imágenes -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- SheetJS para generación de Excel (.xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- html2pdf.js para exportación a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1b365d;
+      --primary-light: #2b5288;
+      --accent: #d97706;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --border: #d1d5db;
+      --success: #10b981;
+      --danger: #ef4444;
+      --info: #0284c7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+
+    .top-bar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-bar h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn-save { background-color: var(--success); color: white; }
+    .btn-cloud { background-color: #0284c7; color: white; }
+    .btn-excel { background-color: #059669; color: white; }
+    .btn-pdf { background-color: #dc2626; color: white; }
+    .btn-export { background-color: #4b5563; color: white; }
+    .btn-add { background-color: var(--primary-light); color: white; padding: 8px 14px; }
+    .btn-danger { background-color: var(--danger); color: white; padding: 4px 8px; font-size: 0.75rem; }
+    .btn-copy { background-color: #e0e7ff; color: #3730a3; }
+
+    .nav-tabs {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      padding: 0 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #93c5fd;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      color: white;
+      border-bottom-color: #60a5fa;
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 2px rgba(43,82,136,0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: white;
+      border-radius: 8px;
+      padding: 14px;
+      border-left: 4px solid var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .metric-card.balance { border-left-color: var(--success); }
+    .metric-card.spent { border-left-color: var(--accent); }
+    .metric-card.unbilled { border-left-color: var(--danger); }
+    .metric-card.allowance { border-left-color: var(--info); }
+
+    .metric-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .metric-val { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+      background: white;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid #f3f4f6;
+    }
+
+    th {
+      background-color: #f8fafc;
+      color: #374151;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tr:hover { background-color: #f9fafb; }
+
+    .badge-status {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-billed { background: #d1fae5; color: #065f46; }
+    .badge-unbilled { background: #fee2e2; color: #991b1b; }
+
+    .drop-zone {
+      border: 2px dashed #93c5fd;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .drop-zone:hover { background-color: #eff6ff; }
+    
+    .verification-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+    }
+    
+    .status-pill {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .pill-ok { background: #dcfce7; color: #15803d; }
+    .pill-fail { background: #fee2e2; color: #b91c1c; }
+    .pill-wait { background: #fef3c7; color: #b45309; }
+
+    .dup-alert {
+      background-color: #fef2f2;
+      border: 1px solid #f87171;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .notice {
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 0.85rem;
+      color: #1e40af;
+      border-radius: 4px;
+    }
+
+    @media print {
+      header, .action-buttons, .tab-btn, .btn-add, .btn-danger, .drop-zone { display: none !important; }
+      body { background: white; padding: 0; }
+      .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+      .tab-content { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA SUPERIOR -->
+  <header>
+    <div class="top-bar">
+      <div>
+        <h1>Conformación de Empresas | Comision 2026</h1>
+        <small style="color: #93c5fd; font-size: 0.75rem;">Guía de Supervisión, Seguimiento y Apoyo (Edición Oficial)</small>
+      </div>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-cloud" onclick="syncToCloud(event)">☁️ Sincronizar Nube</button>
+        <button type="button" class="btn btn-save" onclick="saveToStorage()">💾 Guardar</button>
+        <button type="button" class="btn btn-excel" onclick="exportFullExcel()">📗 Excel (.xlsx)</button>
+        <button type="button" class="btn btn-pdf" onclick="exportFullPDF()">📕 PDF</button>
+        <button type="button" class="btn btn-export" onclick="exportJSON()">📤 Respaldar</button>
+        <button type="button" class="btn btn-export" onclick="triggerImport()">📥 Restaurar</button>
+        <input type="file" id="importInput" style="display:none" onchange="importJSON(event)" accept=".json">
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button type="button" class="tab-btn active" onclick="switchTab('tab-viaticos')">💰 Control de Viáticos y 20%</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-fiscal')">🔍 Verificador Fiscal / RFC INEGI</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-datos-gen')">📋 Datos Generales</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-gabinete')">🏢 Actividades Gabinete</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-campo')">🚗 Actividades Campo</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-concentrado')">📊 Concentrado y Descargables</button>
+    </nav>
+  </header>
+
+  <main class="container" id="printable-area">
+
+    <!-- ================= PESTAÑA: CONTROL DE VIÁTICOS ================= -->
+    <section id="tab-viaticos" class="tab-content active">
+      
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Presupuesto Asignado</div>
+          <div class="metric-val" id="metric-budget">$0.00</div>
+        </div>
+        <div class="metric-card spent">
+          <div class="metric-label">Total Gastado</div>
+          <div class="metric-val" id="metric-spent" style="color: var(--accent);">$0.00</div>
+        </div>
+        <div class="metric-card balance">
+          <div class="metric-label">Saldo Disponible</div>
+          <div class="metric-val" id="metric-balance" style="color: var(--success);">$0.00</div>
+        </div>
+        <div class="metric-card allowance">
+          <div class="metric-label">Margen 20% (Factura Tarjeta)</div>
+          <div class="metric-val" id="metric-allowance" style="color: var(--info);">$0.00</div>
+          <small style="font-size: 0.7rem; color: var(--text-muted);">Sin comprobante requerido</small>
+        </div>
+        <div class="metric-card unbilled">
+          <div class="metric-label">Sin Factura Real / Por Reintegrar</div>
+          <div class="metric-val" id="metric-net-unbilled" style="color: var(--danger);">$0.00</div>
+          <small style="font-size: 0.7rem; color: var(--text-muted);" id="unbilled-subtext">Restando beneficio del 20%</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Fondos Asignados de Comisión</div>
+        <div class="grid">
+          <div class="form-group">
+            <label for="initial-budget">Monto Asignado ($ MXN):</label>
+            <input type="number" id="initial-budget" value="12497" step="0.01" oninput="calculateExpenses()">
+          </div>
+          <div class="form-group">
+            <label for="commission-destination">Destino / Coordinación Visitada:</label>
+            <input type="text" id="commission-destination" placeholder="Ej. Coordinación Estatal Chihuahua">
+          </div>
+          <div class="form-group">
+            <label for="commission-dates">Periodo de Comisión:</label>
+            <input type="text" id="commission-dates" placeholder="Ej. 21 al 26 de Septiembre de 2026">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Capturar Gasto / Desembolso</div>
+        <div class="grid">
+          <div class="form-group">
+            <label for="exp-desc">Concepto / Establecimiento:</label>
+            <input type="text" id="exp-desc" placeholder="Ej. Hotel, Restaurante, Gasolinera...">
+          </div>
+          <div class="form-group">
+            <label for="exp-amount">Monto ($ MXN):</label>
+            <input type="number" id="exp-amount" placeholder="6000.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="exp-method">Método de Pago:</label>
+            <select id="exp-method">
+              <option value="Tarjeta">💳 Tarjeta (Aplica 20% no comprobable si se factura)</option>
+              <option value="Efectivo">💵 Efectivo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="exp-cat">Categoría:</label>
+            <select id="exp-cat">
+              <option value="Hospedaje">Hospedaje / Hotel</option>
+              <option value="Alimentos">Alimentación</option>
+              <option value="Combustible">Combustible / Gasolina</option>
+              <option value="Casetas">Casetas de Peaje</option>
+              <option value="Transporte Local">Taxis / Pasajes</option>
+              <option value="Otros">Otros / Imprevistos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="exp-date">Fecha del Gasto:</label>
+            <input type="date" id="exp-date">
+          </div>
+          <div class="form-group">
+            <label for="exp-uuid">Folio Fiscal / Factura (Anti-duplicado):</label>
+            <input type="text" id="exp-uuid" placeholder="Folio o UUID fiscal del comprobante">
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <label style="margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="exp-invoice" checked style="width: 18px; height: 18px;">
+            <span style="font-weight: 600;">¿Cuenta con Factura (CFDI)?</span>
+          </label>
+          <button type="button" class="btn btn-add" onclick="addExpense()">➕ Registrar Gasto en Bitácora</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Bitácora de Desglose de Gastos</span>
+          <button type="button" class="btn btn-excel" onclick="exportExpensesCSV()">📊 Exportar Bitácora CSV</button>
+        </div>
+        <div class="table-responsive">
+          <table id="expenses-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Concepto / Establecimiento</th>
+                <th>Folio / UUID</th>
+                <th>Método</th>
+                <th>Categoría</th>
+                <th>Importe</th>
+                <th>Estatus Factura</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="expenses-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= PESTAÑA: VERIFICADOR FISCAL ================= -->
+    <section id="tab-fiscal" class="tab-content">
+      
+      <div class="card">
+        <div class="card-title">
+          <span>Datos Fiscales Oficiales del Instituto (CFDI 4.0)</span>
+          <button type="button" class="btn btn-copy" onclick="copyFiscalData()">📋 Copiar Datos para Facturar</button>
+        </div>
+        <div class="grid">
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: var(--primary-light);">RFC Receptor:</strong>
+            <div style="font-size: 1.1rem; font-weight: bold; font-family: monospace;">INE0804164Z7</div>
+          </div>
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: var(--primary-light);">Razón Social Oficial:</strong>
+            <div style="font-weight: 600;">INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA</div>
+          </div>
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: var(--primary-light);">Régimen Fiscal Receptor:</strong>
+            <div>603 - Personas Morales con Fines no Lucrativos</div>
+          </div>
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: var(--primary-light);">Código Postal Fiscal:</strong>
+            <div style="font-size: 1.1rem; font-weight: bold; font-family: monospace;">20276</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Cargar Factura o Fotografía para Validación Automática</div>
+        
+        <div class="drop-zone" onclick="document.getElementById('invoiceFileInput').click()">
+          <div style="font-size: 2rem;">📷 / 📄</div>
+          <div style="font-weight: 600; margin-top: 6px;">Toca aquí para tomar foto o cargar archivo PDF / XML</div>
+          <small style="color: var(--text-muted);">Extrae automáticamente el nombre del establecimiento emisor y detecta duplicados</small>
+          <input type="file" id="invoiceFileInput" style="display: none;" accept="image/*,application/pdf,text/xml,.xml" onchange="processUploadedInvoice(event)">
+        </div>
+
+        <div id="ocr-loader" style="display:none; text-align: center; margin: 15px 0; color: var(--info); font-weight: 600;">
+          ⏳ Procesando documento y validando datos... por favor espera.
+        </div>
+
+        <div id="dup-warning" class="dup-alert">
+          ⚠️ <strong>¡Factura posiblemente duplicada!</strong> Ya existe un gasto registrado con el mismo establecimiento / importe / folio en la bitácora.
+        </div>
+
+        <div id="validation-report" style="display: none; margin-top: 20px;">
+          <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--primary);">Diagnóstico y Extracción del Comprobante:</h3>
+          
+          <div style="border: 1px solid var(--border); border-radius: 6px; background: white;">
+            <div class="verification-item">
+              <div><strong>Establecimiento / Emisor detectado:</strong> <span id="res-vendor-text" style="color: var(--primary); font-weight: bold;">-</span></div>
+              <span id="res-vendor-pill" class="status-pill pill-ok">Identificado</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Importe Total Detectado:</strong> <span id="res-amount-text" style="font-weight: bold; color: var(--success);">$0.00</span></div>
+              <span id="res-amount-pill" class="status-pill pill-ok">Listo</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Folio / UUID Fiscal:</strong> <span id="res-uuid-text">No detectado</span></div>
+              <span id="res-uuid-pill" class="status-pill pill-wait">Info</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>RFC INEGI (INE0804164Z7):</strong> <span id="res-rfc-text">No detectado</span></div>
+              <span id="res-rfc-pill" class="status-pill pill-wait">Pendiente</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Razón Social INEGI:</strong> <span id="res-rs-text">No detectado</span></div>
+              <span id="res-rs-pill" class="status-pill pill-wait">Pendiente</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Código Postal 20276:</strong> <span id="res-cp-text">No detectado</span></div>
+              <span id="res-cp-pill" class="status-pill pill-wait">Pendiente</span>
+            </div>
+            <div class="verification-item">
+              <div><strong>Método de Pago:</strong> <span id="res-card-text">Tarjeta</span></div>
+              <span id="res-card-pill" class="status-pill pill-ok">Aplica 20%</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-save" onclick="transferInvoiceToExpenses()">➕ Cargar como Gasto Comprobado en Viáticos</button>
+            <button type="button" class="btn btn-export" onclick="toggleRawText()">Ver Texto Completo Extraído</button>
+          </div>
+          <div id="raw-extracted-box" style="display: none; margin-top: 10px;">
+            <textarea id="raw-extracted-text" style="width:100%; font-size: 0.75rem; height: 120px;" readonly></textarea>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= PESTAÑA: DATOS GENERALES ================= -->
+    <section id="tab-datos-gen" class="tab-content">
+      <div class="card">
+        <p style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+          Dirección General Adjunta de Registros Administrativos Económicos<br>
+          Dirección de Diseño, Captación y Evaluación del Registro de Negocios<br>
+          Subdirección de Captación en Campo[cite: 2]
+        </p>
+        <div class="card-title" style="margin-top: 10px;">
+          GUÍA DE SUPERVISIÓN, SEGUIMIENTO Y APOYO AL OPERATIVO DE ACTUALIZACIÓN DE LA CONFORMACIÓN DE EMPRESAS DEL RENEM 2026[cite: 2]
+        </div>
+
+        <div class="grid">
+          <div class="form-group">
+            <label>Periodo:[cite: 2]</label>
+            <input type="text" id="gen-periodo" placeholder="Ej. Del 21 al 26 de Septiembre de 2026">
+          </div>
+          <div class="form-group">
+            <label>Coordinación estatal visitada:[cite: 2]</label>
+            <input type="text" id="gen-ce" placeholder="Ej. Coordinación Estatal Chihuahua">
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Nombre y puesto del supervisor/a:[cite: 2]</label>
+            <input type="text" id="gen-supervisor" placeholder="Nombre y puesto oficial">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Objetivos[cite: 2]</div>
+        <div class="notice">
+          • Dar seguimiento a la aplicación de la estrategia operativa establecida para la actualización de la conformación de empresas, mediante la observación del uso adecuado de los formatos de control establecidos.[cite: 2]<br>
+          • Detectar áreas de oportunidad en la estrategia operativa, los procedimientos y los instrumentos de captación de información, mediante el acompañamiento a las personas representantes que participan en las actividades establecidas para la actualización de la conformación de empresas.[cite: 2]
+        </div>
+
+        <div class="card-title" style="margin-top: 20px;">Instrucciones generales[cite: 2]</div>
+        <div style="font-size: 0.85rem; color: #4b5563; line-height: 1.6;">
+          <ul style="padding-left: 20px;">
+            <li>Compañera(o), el primer día de tu comisión preséntate con el/la SEE y JDEERA para informarles el propósito y periodo de tu visita, el área de adscripción en oficinas centrales y los requerimientos necesarios para el cumplimiento de tu comisión.[cite: 2]</li>
+            <li>Durante tu encomienda, reparte las actividades de campo y gabinete como se te vayan acomodando, sin perder de vista que todas ellas deben llevarse a cabo. Adecua las tablas de esta guía según lo requieras.[cite: 2]</li>
+            <li>El último día acude con el/la SEE y JDEERA para despedirte formalmente y entregarle(s) tu informe por escrito, el cual deberá contener las actividades realizadas, los hallazgos identificados y las situaciones relevantes observadas durante tu supervisión. Asimismo, entrega una copia al/la JDEERA y ECM/JCAD, y solicita el acuse de recibido correspondiente.[cite: 2]</li>
+            <li>En caso de no localizar al/la SEE, entrega el informe al/la JDEERA y solicita su apoyo para gestionar la obtención de las firmas correspondientes y el envío del documento escaneado a más tardar el siguiente lunes.[cite: 2]</li>
+            <li>Una vez de regreso, en oficinas centrales entrega el acuse del informe al Departamento de Estrategias de Captación en Campo, así como, esta guía de supervisión contestada como parte de las actividades.[cite: 2]</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PESTAÑA: ACTIVIDADES DE GABINETE ================= -->
+    <section id="tab-gabinete" class="tab-content">
+      
+      <div class="card">
+        <div class="card-title">Actividades de gabinete[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Revisa, en coordinación con el JCAD, el formato de Seguimiento y Control Estatal, verificando que las observaciones se actualicen conforme al seguimiento de la empresa, la correcta asignación de los estatus y la completitud de la información registrada.[cite: 2]
+        </p>
+        <div class="form-group">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-1" placeholder="Registra observaciones sobre estatus y completitud..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Intercambios recibidos[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Verifica el seguimiento y la atención que se les da. Si no han sido verificados en campo, agrégalos a la agenda de campo para favorecer la obtención de la información.[cite: 2]<br>
+          Pregunta; si hay intercambios que se encuentren pendientes de respuesta por parte de la entidad destino, con la finalidad de que te coordines con el enlace central correspondiente y agilizar la atención.[cite: 2]
+        </p>
+        <div class="form-group">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-2" placeholder="Notas sobre seguimiento de intercambios y coordinación..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Estatus 1, 2, 3 y 4[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Pregunta por las empresas con el propósito de identificar las situaciones que pudieran estar retrasando la entrega del FACE y da seguimiento a las acciones necesarias para favorecer la recuperación oportuna de la información.[cite: 2]
+        </p>
+        <div class="form-group">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-3" placeholder="Notas sobre causas de retraso..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Envío por correo electrónico[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Confirma que se dé seguimiento puntual a las empresas que se comprometieron en enviar su información por correo electrónico, además, solicita los correos enviados a las personas informantes y registra lo siguiente:[cite: 2]
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="3" style="text-align:center; background:#e2e8f0; color:var(--primary); font-weight:bold;">ENVÍO DE FACE POR CORREO ELECTRÓNICO[cite: 2]</th>
+              </tr>
+              <tr>
+                <th>Número de empresas contactadas[cite: 2]</th>
+                <th>Material adjunto enviado[cite: 2]</th>
+                <th>Núm. de empresas que enviaron el FACE o directorio[cite: 2]</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="number" id="gab-mail-contactadas" style="width: 100%;"></td>
+                <td><input type="text" id="gab-mail-material" placeholder="Ej. Directorio XLS, Oficio..." style="width: 100%;"></td>
+                <td><input type="number" id="gab-mail-enviaron" style="width: 100%;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-mail"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Agenda de campo[cite: 2]</span>
+          <button type="button" class="btn btn-add" onclick="addAgendaRow()">➕ Fila</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Elabora una agenda de campo, con base en la revisión realizada, procurando visitar empresas en situación de pendiente, negativa o que provengan de un intercambio; en acompañamiento de una persona representante. Da prioridad a las empresas con las que no se ha establecido contacto o las que no han respondido las solicitudes de información. La agenda debe integrarse por al menos 3 empresas o más, durante tu comisión.[cite: 2]
+        </p>
+        <div class="table-responsive">
+          <table id="tbl-agenda">
+            <thead>
+              <tr>
+                <th>Razón social[cite: 2]</th>
+                <th>Motivo del pendiente[cite: 2]</th>
+                <th>Acciones de seguimiento[cite: 2]</th>
+                <th style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Asignación de los códigos de resultado[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Revisa en el aplicativo, que el ECM/JCAD asigne los códigos y que estos sean congruentes con el estatus (1 al 9), asimismo que las observaciones correspondan.[cite: 2]
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="4" style="text-align:center; background:#e2e8f0; color:var(--primary); font-weight:bold;">ASIGNACIÓN DE CÓDIGOS DE RESULTADO[cite: 2]</th>
+              </tr>
+              <tr>
+                <th>Tootal de inconsistencias detectadas[cite: 2]</th>
+                <th>Sin código asignado[cite: 2]</th>
+                <th>El código no corresponde al estatus[cite: 2]</th>
+                <th>Sin observaciones congruentes o completas[cite: 2]</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="number" id="gab-inconsistencias-tot" style="width: 100%;"></td>
+                <td><input type="number" id="gab-sin-codigo" style="width: 100%;"></td>
+                <td><input type="number" id="gab-no-corresponde" style="width: 100%;"></td>
+                <td><input type="number" id="gab-sin-observaciones" style="width: 100%;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-codigos"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Listados de empresas[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Revísalos a fin de corroborar su utilización y conocer el método de actualización más usado, además, verifica las fechas compromiso para la devolución del FACE y el registro oportuno de las visitas.[cite: 2]
+        </p>
+        <div class="form-group">
+          <label>Notas:[cite: 2]</label>
+          <textarea id="gab-notas-listados"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Revisión de 5 FACE con código 40A[cite: 2]</span>
+          <button type="button" class="btn btn-add" onclick="addFaceRow()">➕ Fila</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Cuestionario captado con información completa, verificando que la información registrada sea válida, consistente y congruente, además, identifica los registros que se dieron de alta y las bajas. En caso de detectar inconsistencias, informa al ECM/JCAD para que retroalimente al equipo y, en su caso, se lleven a cabo las acciones correctivas correspondientes. Para esta actividad puedes apoyarte en el FD y en las instrucciones de llenado.[cite: 2]
+        </p>
+        <div class="table-responsive">
+          <table id="tbl-faces-40a">
+            <thead>
+              <tr>
+                <th>EMPRESAS REVISADAS[cite: 2]</th>
+                <th>INCONSISTENCIA(S) DETECTADA(S)[cite: 2]</th>
+                <th style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+              <tr><td><input type="text" style="width: 100%;"></td><td><input type="text" style="width: 100%;"></td><td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">
+          En caso de requerirse, apoya en la captura o revisión de los directorios remitidos por los informantes a la oficina, verificando la congruencia de la información antes de su integración al FACE e ingresarlo al aplicativo web Conformación de Empresas.[cite: 2]
+        </p>
+      </div>
+
+    </section>
+
+    <!-- ================= PESTAÑA: ACTIVIDADES DE CAMPO ================= -->
+    <section id="tab-campo" class="tab-content">
+      <div class="card">
+        <div class="card-title">Actividades de campo – Identifica áreas de oportunidad –[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; line-height: 1.5; margin-bottom: 12px;">
+          <strong>Agenda de campo.</strong> Acompaña a la persona representante durante las actividades de campo de acuerdo con la agenda prevista. En los casos de empresas con negativa, brinda apoyo en la sensibilización de los informantes, puedes apoyarte de la infografía del DENUE y de tu conocimiento del sistema de consulta.[cite: 2]<br>
+          Retroalimenta a la persona representante en los temas que requiera.[cite: 2]
+        </p>
+
+        <div class="table-responsive" style="max-width: 600px;">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2" style="text-align:center; background:#e2e8f0; color:var(--primary); font-weight:bold;">AGENDA[cite: 2]</th>
+              </tr>
+              <tr>
+                <th style="width: 60px;">Núm.[cite: 2]</th>
+                <th>Razón social[cite: 2]</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1.[cite: 2]</td><td><input type="text" id="campo-ag-1" style="width:100%;"></td></tr>
+              <tr><td>2.[cite: 2]</td><td><input type="text" id="campo-ag-2" style="width:100%;"></td></tr>
+              <tr><td>3.[cite: 2]</td><td><input type="text" id="campo-ag-3" style="width:100%;"></td></tr>
+              <tr><td>4.[cite: 2]</td><td><input type="text" id="campo-ag-4" style="width:100%;"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <small style="color: var(--text-muted); display:block; margin-top: 4px;">*Puedes agregar empresas a este listado[cite: 2]</small>
+      </div>
+
+      <div class="notice">
+        Con base en lo observado durante el acompañamiento a campo, recaba la siguiente información por empresa agendada. De visitar más de una empresa, puedes tomar más cuadros en el anexo de esta guía.[cite: 2]
+      </div>
+
+      <div id="empresas-container"></div>
+
+      <div style="text-align: center; margin: 20px 0;">
+        <button type="button" class="btn btn-add" onclick="addEmpresaCard()">➕ Evaluar Otra Empresa Visitada</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Cierre de Actividades</div>
+        <p style="font-size: 0.85rem; color: #4b5563; line-height: 1.6;">
+          Terminadas las actividades de campo y gabinete, integra tu informe de supervisión con lo observado tanto en campo como en gabinete, así como las áreas de oportunidad detectadas, si es que existen, y si es que se ofreció alguna propuesta para mejorar los resultados, etcétera.[cite: 2]<br>
+          Posteriormente presenta tu informe al/la JDEERA y JCAD con la finalidad de comentar lo observado tanto en campo como en gabinete y, de ser necesario, retroalimenta las situaciones que lo requieran.[cite: 2]
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= PESTAÑA: CONCENTRADO Y DESCARGABLES ================= -->
+    <section id="tab-concentrado" class="tab-content">
+      
+      <div class="card">
+        <div class="card-title">Concentrado del resultado de las actividades de supervisión[cite: 2]</div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>CONCEPTO[cite: 2]</th>
+                <th style="width: 200px;">CANTIDAD[cite: 2]</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Empresas revisadas en gabinete (FACE)[cite: 2]</td><td><input type="number" id="conc-1" style="width: 100%;"></td></tr>
+              <tr><td>Empresas visitadas en campo[cite: 2]</td><td><input type="number" id="conc-2" style="width: 100%;"></td></tr>
+              <tr><td>Empresas actualizadas durante la comisión (40A)[cite: 2]</td><td><input type="number" id="conc-3" style="width: 100%;"></td></tr>
+              <tr><td>Empresas con negativa visitadas[cite: 2]</td><td><input type="number" id="conc-4" style="width: 100%;"></td></tr>
+              <tr><td>Recuperación de FACE o directorios de empresas durante la comisión[cite: 2]</td><td><input type="number" id="conc-5" style="width: 100%;"></td></tr>
+              <tr><td>Inconsistencias detectadas en los FACE[cite: 2]</td><td><input type="number" id="conc-6" style="width: 100%;"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Evaluación de Procedimientos Operativos</div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Pregunta / Aspecto Evaluado[cite: 2]</th>
+                <th style="width: 180px;">Respuesta[cite: 2]</th>
+                <th>OBSERVACIONES[cite: 2]</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>¿Se están aplicando correctamente los procedimientos definidos en la Guía del procedimiento operativo para la actualización de la conformación de empresas del RENEM?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-1" style="width: 100%;">
+                    <option value="SÍ">SÍ</option>
+                    <option value="NO">NO</option>
+                    <option value="NO APLICA">NO APLICA</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-1" style="width: 100%;"></td>
+              </tr>
+              <tr>
+                <td>¿El Listado de empresas es actualizado diariamente por el TAD y lo entrega al/la ECM/JCAD?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-2" style="width: 100%;">
+                    <option value="SÍ">SÍ</option>
+                    <option value="NO">NO</option>
+                    <option value="NO APLICA">NO APLICA</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-2" style="width: 100%;"></td>
+              </tr>
+              <tr>
+                <td>¿El formato de Seguimiento y Control Estatal se llena de forma adecuada por parte del ECM/JCAD?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-3" style="width: 100%;">
+                    <option value="SÍ">SÍ</option>
+                    <option value="NO">NO</option>
+                    <option value="NO APLICA">NO APLICA</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-3" style="width: 100%;"></td>
+              </tr>
+              <tr>
+                <td>¿El informante está cumpliendo con la fecha compromiso de la entrega del FACE actualizado, independientemente del método de entrega?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-4" style="width: 100%;">
+                    <option value="Sí">Sí</option>
+                    <option value="NO">NO</option>
+                    <option value="NO APLICA">NO APLICA</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-4" style="width: 100%;"></td>
+              </tr>
+              <tr>
+                <td>¿Te reportaron dificultad con el llenado del FACE ya sea por parte del informante o del representante?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-5" style="width: 100%;">
+                    <option value="NO">NO</option>
+                    <option value="Sí">Sí</option>
+                    <option value="NO APLICA">NO APLICA</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-5" style="width: 100%;"></td>
+              </tr>
+              <tr>
+                <td>Si algún informante se resiste o se niega a participar, ¿qué razones da?[cite: 2]</td>
+                <td>
+                  <select id="eval-proc-6" style="width: 100%;">
+                    <option value="NO APLICA">NO APLICA</option>
+                    <option value="CON RAZONES">CON RAZONES</option>
+                  </select>
+                </td>
+                <td><input type="text" id="eval-obs-6" placeholder="Anota razones señaladas..." style="width: 100%;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Descargables (Aplicativo Web Conformación de Empresas)[cite: 2]</div>
+        <p style="font-size: 0.85rem; color: #374151; margin-bottom: 8px;">
+          Ingresa al aplicativo web Conformación de Empresas, en la pestaña descargables, y llena la siguiente información:[cite: 2]
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="6" style="text-align:center; background:#e2e8f0; color:var(--primary); font-weight:bold;">DRESCARGABLES[cite: 2]</th>
+              </tr>
+              <tr>
+                <th colspan="2">¿Se tienen archivos descargables?[cite: 2]</th>
+                <th>Número de archivos[cite: 2]</th>
+                <th colspan="2">¿El FACE se actualizó en la CE con el directorio enviado por el informante?[cite: 2]</th>
+                <th>¿Cuál es el seguimiento que se les da a los directorios (descargables)[cite: 2]</th>
+              </tr>
+              <tr>
+                <th style="width: 60px;">Sí[cite: 2]</th>
+                <th style="width: 60px;">No[cite: 2]</th>
+                <th></th>
+                <th style="width: 60px;">Sí[cite: 2]</th>
+                <th style="width: 60px;">No[cite: 2]</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="text-align:center;"><input type="radio" name="desc-tienen" value="Sí"></td>
+                <td style="text-align:center;"><input type="radio" name="desc-tienen" value="No"></td>
+                <td><input type="number" id="desc-num" style="width: 100%;"></td>
+                <td style="text-align:center;"><input type="radio" name="desc-act-ce" value="Sí"></td>
+                <td style="text-align:center;"><input type="radio" name="desc-act-ce" value="No"></td>
+                <td><input type="text" id="desc-seguimiento" placeholder="Describe el seguimiento..." style="width: 100%;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">
+          En caso de detectar que no se está llevando a cabo la actualización del FACE con los directorios depositados por las empresas, brinda la retroalimentación necesaria.[cite: 2]
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT:
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_zOhyg1X6aTWEOnQzx3OMMBO4T3r4YYjnIU6My5oUQTchiEC9eapEsZQQHP2BWQec5g/exec";
+
+    async function syncToCloud(e) {
+      const sup = document.getElementById('gen-supervisor').value.trim();
+      if (!sup) {
+        alert("Por favor escribe tu 'Nombre y puesto del supervisor/a' en la pestaña Datos Generales antes de sincronizar.");
+        switchTab('tab-datos-gen');
+        return;
+      }
+
+      saveToStorage();
+      const payload = collectAllData();
+      payload.commissionDestination = document.getElementById('commission-destination').value;
+      payload.commissionDates = document.getElementById('commission-dates').value;
+
+      const btn = e.target;
+      const originalText = btn.innerText;
+      btn.innerText = "Sincronizando...";
+      btn.disabled = true;
+
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        alert(`¡Información de ${sup} sincronizada correctamente en Google Sheets!`);
+      } catch (error) {
+        alert("Hubo un problema de conexión. Tus datos siguen seguros en tu dispositivo.");
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // =======================================================
+    // MÓDULO 1: VERIFICADOR FISCAL Y PREVENCIÓN DUPLICADOS
+    // =======================================================
+    let lastDetectedAmount = 0;
+    let lastDetectedVendor = '';
+    let lastDetectedMethod = 'Tarjeta';
+    let lastDetectedUUID = '';
+
+    function copyFiscalData() {
+      const text = 
+`RFC: INE0804164Z7
+Razón Social: INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA
+Régimen Fiscal: 603 - Personas Morales con Fines no Lucrativos
+Código Postal: 20276
+Uso de CFDI: G03 - Gastos en general
+Domicilio Fiscal: Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('¡Datos fiscales copiados al portapapeles!');
+      });
+    }
+
+    async function processUploadedInvoice(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const loader = document.getElementById('ocr-loader');
+      const report = document.getElementById('validation-report');
+      const dupAlert = document.getElementById('dup-warning');
+      loader.style.display = 'block';
+      report.style.display = 'none';
+      dupAlert.style.display = 'none';
+
+      let textExtracted = '';
+
+      try {
+        if (file.type === 'application/pdf') {
+          textExtracted = await extractTextFromPDF(file);
+        } else if (file.type === 'text/xml' || file.name.endsWith('.xml')) {
+          textExtracted = await file.text();
+        } else {
+          const result = await Tesseract.recognize(file, 'spa');
+          textExtracted = result.data.text;
+        }
+
+        analyzeInvoiceText(textExtracted);
+      } catch (err) {
+        console.error(err);
+        alert('Error al leer el archivo. Asegúrate de que la toma sea clara y legible.');
+      } finally {
+        loader.style.display = 'none';
+      }
+    }
+
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + ' \n ';
+      }
+      return fullText;
+    }
+
+    function analyzeInvoiceText(text) {
+      document.getElementById('raw-extracted-text').value = text;
+      const cleanUpper = text.toUpperCase();
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+      lastDetectedVendor = extractVendorName(lines, text);
+      document.getElementById('res-vendor-text').innerText = lastDetectedVendor || 'Establecimiento identificado';
+
+      const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+      if (uuidMatch) {
+        lastDetectedUUID = uuidMatch[0];
+        document.getElementById('res-uuid-text').innerText = lastDetectedUUID;
+        document.getElementById('res-uuid-pill').className = 'status-pill pill-ok';
+        document.getElementById('res-uuid-pill').innerText = 'UUID Detectado';
+      } else {
+        const folioMatch = text.match(/(?:Folio|Factura|Factura No\.?|Ticket No\.?)\s*[:#]?\s*([A-Za-z0-9\-]+)/i);
+        lastDetectedUUID = folioMatch ? folioMatch[1] : '';
+        document.getElementById('res-uuid-text').innerText = lastDetectedUUID || 'No detectado';
+        document.getElementById('res-uuid-pill').className = 'status-pill pill-wait';
+        document.getElementById('res-uuid-pill').innerText = lastDetectedUUID ? 'Folio serie' : 'Sin folio';
+      }
+
+      lastDetectedAmount = 0;
+      const totalMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) ||
+                         text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
+      if (totalMatch) {
+        lastDetectedAmount = parseFloat(totalMatch[1].replace(/,/g, '')) || 0;
+      }
+      document.getElementById('res-amount-text').innerText = `$${lastDetectedAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+      const hasRFC = cleanUpper.includes('INE0804164Z7') || cleanUpper.includes('INE-080416-4Z7');
+      setPill('res-rfc', hasRFC, hasRFC ? 'Detectado (INE0804164Z7)' : 'No encontrado');
+
+      const hasRS = cleanUpper.includes('INSTITUTO NACIONAL DE ESTADISTICA') || cleanUpper.includes('INSTITUTO NACIONAL DE ESTADÍSTICA');
+      setPill('res-rs', hasRS, hasRS ? 'Correcto (INEGI)' : 'No detectada');
+
+      const hasCP = cleanUpper.includes('20276');
+      setPill('res-cp', hasCP, hasCP ? 'Correcto (20276)' : 'No detectado (Debe ser CP 20276)');
+
+      const isCard = cleanUpper.includes('TARJETA') || cleanUpper.includes('04') || cleanUpper.includes('28') || cleanUpper.includes('DEBITO') || cleanUpper.includes('CREDITO');
+      const isCash = cleanUpper.includes('EFECTIVO') || cleanUpper.includes('01');
+
+      if (isCard) {
+        lastDetectedMethod = 'Tarjeta';
+        setPill('res-card', true, 'Pago con Tarjeta (Aplica 20%)');
+      } else if (isCash) {
+        lastDetectedMethod = 'Efectivo';
+        setPill('res-card', false, 'Pago en Efectivo');
+      } else {
+        lastDetectedMethod = 'Tarjeta';
+        setPill('res-card', true, 'Configurado como Tarjeta');
+      }
+
+      checkIfDuplicate(lastDetectedVendor, lastDetectedAmount, lastDetectedUUID);
+      document.getElementById('validation-report').style.display = 'block';
+    }
+
+    function extractVendorName(lines, rawText) {
+      const xmlMatch = rawText.match(/<cfdi:Emisor[^>]+Nombre="([^"]+)"/i) || rawText.match(/Nombre="([^"]+)"[^>]+Rfc="(?!INE0804164Z7)[^"]+"/i);
+      if (xmlMatch && xmlMatch[1]) return xmlMatch[1];
+
+      for (let line of lines) {
+        const upper = line.toUpperCase();
+        if (upper.includes('INSTITUTO NACIONAL') || upper.includes('INE0804164Z7') || upper.includes('CFDI') || upper.includes('FACTURA') || upper.includes('PÁGINA') || upper.includes('PAGINA')) {
+          continue;
+        }
+        const vendorPrefix = line.match(/(?:Emisor|Proveedor|Razón Social|Razon Social|Establecimiento)[:\s]+(.+)/i);
+        if (vendorPrefix && vendorPrefix[1].trim().length > 3) {
+          return vendorPrefix[1].trim();
+        }
+        if (line.length >= 4 && !line.includes(':') && !/\d{5}/.test(line)) {
+          return line;
+        }
+      }
+      return 'Establecimiento Comprobado';
+    }
+
+    function checkIfDuplicate(vendor, amount, uuid) {
+      const dupAlert = document.getElementById('dup-warning');
+      const isDup = expenses.some(e => {
+        if (uuid && e.uuid && e.uuid.toLowerCase() === uuid.toLowerCase()) return true;
+        if (amount > 0 && e.amount === amount && vendor && e.desc.toLowerCase().includes(vendor.toLowerCase())) return true;
+        return false;
+      });
+      dupAlert.style.display = isDup ? 'block' : 'none';
+    }
+
+    function setPill(idPrefix, isValid, textMessage) {
+      const textElem = document.getElementById(`${idPrefix}-text`);
+      const pillElem = document.getElementById(`${idPrefix}-pill`);
+      textElem.innerText = textMessage;
+      if (isValid) {
+        pillElem.className = 'status-pill pill-ok';
+        pillElem.innerText = 'Válido ✓';
+      } else {
+        pillElem.className = 'status-pill pill-fail';
+        pillElem.innerText = 'Atención ✕';
+      }
+    }
+
+    function toggleRawText() {
+      const box = document.getElementById('raw-extracted-box');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function transferInvoiceToExpenses() {
+      const isDup = expenses.some(e => {
+        if (lastDetectedUUID && e.uuid && e.uuid.toLowerCase() === lastDetectedUUID.toLowerCase()) return true;
+        if (lastDetectedAmount > 0 && e.amount === lastDetectedAmount && lastDetectedVendor && e.desc.toLowerCase() === lastDetectedVendor.toLowerCase()) return true;
+        return false;
+      });
+
+      if (isDup) {
+        const proceed = confirm('⚠️ ADVERTENCIA DE DUPLICADO: Ya existe un gasto registrado con este importe y establecimiento. ¿Deseas agregarlo igualmente?');
+        if (!proceed) return;
+      }
+
+      switchTab('tab-viaticos');
+      if (lastDetectedAmount > 0) document.getElementById('exp-amount').value = lastDetectedAmount;
+      document.getElementById('exp-desc').value = lastDetectedVendor || 'Gasto Facturado';
+      document.getElementById('exp-method').value = lastDetectedMethod;
+      document.getElementById('exp-uuid').value = lastDetectedUUID || '';
+      document.getElementById('exp-invoice').checked = true;
+      window.scrollTo({ top: 380, behavior: 'smooth' });
+    }
+
+    // =======================================================
+    // MÓDULO 2: CONTROL DE VIÁTICOS Y MARGEN 20%
+    // =======================================================
+    let expenses = [
+      { id: 1, date: '2026-09-15', desc: 'Hotel de estancia', uuid: 'F-84920', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje', invoice: true }
+    ];
+
+    function renderExpenses() {
+      const tbody = document.getElementById('expenses-tbody');
+      tbody.innerHTML = '';
+
+      expenses.forEach((item, index) => {
+        const isCard = (item.method || 'Tarjeta') === 'Tarjeta';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.date || '-'}</td>
+          <td><strong>${escapeHtml(item.desc)}</strong></td>
+          <td><small style="color:var(--text-muted); font-family:monospace;">${escapeHtml(item.uuid || '-')}</small></td>
+          <td>
+            <select onchange="changePaymentMethod(${index}, this.value)" style="padding: 4px 6px; font-size: 0.8rem;">
+              <option value="Tarjeta" ${isCard ? 'selected' : ''}>💳 Tarjeta</option>
+              <option value="Efectivo" ${!isCard ? 'selected' : ''}>💵 Efectivo</option>
+            </select>
+          </td>
+          <td>${item.cat}</td>
+          <td>$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" ${item.invoice ? 'checked' : ''} onchange="toggleInvoice(${index})">
+              <span class="badge-status ${item.invoice ? 'badge-billed' : 'badge-unbilled'}">
+                ${item.invoice ? '✓ Con Factura' : '✕ Sin Factura'}
+              </span>
+            </label>
+          </td>
+          <td>
+            <button type="button" class="btn btn-danger" onclick="deleteExpense(${index})">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      calculateExpenses();
+    }
+
+    function addExpense() {
+      const desc = document.getElementById('exp-desc').value.trim();
+      const amount = parseFloat(document.getElementById('exp-amount').value);
+      const method = document.getElementById('exp-method').value;
+      const cat = document.getElementById('exp-cat').value;
+      const date = document.getElementById('exp-date').value;
+      const uuid = document.getElementById('exp-uuid').value.trim();
+      const invoice = document.getElementById('exp-invoice').checked;
+
+      if (!desc || isNaN(amount) || amount <= 0) {
+        alert('Por favor ingresa un establecimiento/concepto válido y un monto mayor a 0.');
+        return;
+      }
+
+      const isDup = expenses.some(e => {
+        if (uuid && e.uuid && e.uuid.toLowerCase() === uuid.toLowerCase()) return true;
+        if (e.amount === amount && e.desc.toLowerCase() === desc.toLowerCase()) return true;
+        return false;
+      });
+
+      if (isDup) {
+        const proceed = confirm(`⚠️ Posible duplicado: Ya registraste "${desc}" por $${amount}. ¿Deseas agregarlo?`);
+        if (!proceed) return;
+      }
+
+      expenses.push({
+        id: Date.now(),
+        date: date,
+        desc: desc,
+        uuid: uuid,
+        amount: amount,
+        method: method,
+        cat: cat,
+        invoice: invoice
+      });
+
+      document.getElementById('exp-desc').value = '';
+      document.getElementById('exp-amount').value = '';
+      document.getElementById('exp-uuid').value = '';
+      document.getElementById('exp-invoice').checked = true;
+
+      renderExpenses();
+      autoSave();
+      alert('¡Gasto registrado con éxito!');
+    }
+
+    function deleteExpense(index) {
+      if (confirm('¿Deseas eliminar este registro de gasto?')) {
+        expenses.splice(index, 1);
+        renderExpenses();
+        autoSave();
+      }
+    }
+
+    function toggleInvoice(index) {
+      expenses[index].invoice = !expenses[index].invoice;
+      renderExpenses();
+      autoSave();
+    }
+
+    function changePaymentMethod(index, value) {
+      expenses[index].method = value;
+      renderExpenses();
+      autoSave();
+    }
+
+    function calculateExpenses() {
+      const budget = parseFloat(document.getElementById('initial-budget').value) || 0;
+      let totalSpent = 0;
+      let cardInvoicedTotal = 0;
+      let rawUninvoicedTotal = 0;
+
+      expenses.forEach(e => {
+        totalSpent += e.amount;
+        const isCard = (e.method || 'Tarjeta') === 'Tarjeta';
+
+        if (e.invoice) {
+          if (isCard) cardInvoicedTotal += e.amount;
+        } else {
+          rawUninvoicedTotal += e.amount;
+        }
+      });
+
+      const nonInvoiceableAllowance = cardInvoicedTotal * 0.20;
+      const netUninvoiced = Math.max(0, rawUninvoicedTotal - nonInvoiceableAllowance);
+      const balance = budget - totalSpent;
+
+      document.getElementById('metric-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      document.getElementById('metric-spent').innerText = `$${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      
+      const balanceElem = document.getElementById('metric-balance');
+      balanceElem.innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      balanceElem.style.color = balance < 0 ? 'var(--danger)' : 'var(--success)';
+
+      document.getElementById('metric-allowance').innerText = `$${nonInvoiceableAllowance.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      
+      const netUnbilledElem = document.getElementById('metric-net-unbilled');
+      netUnbilledElem.innerText = `$${netUninvoiced.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+      
+      const subtext = document.getElementById('unbilled-subtext');
+      if (nonInvoiceableAllowance > 0) {
+        subtext.innerText = `Sin factura: $${rawUninvoicedTotal.toFixed(2)} (Amparado por 20%: $${nonInvoiceableAllowance.toFixed(2)})`;
+      } else {
+        subtext.innerText = `Sin facturas pagadas con tarjeta`;
+      }
+    }
+
+    function exportExpensesCSV() {
+      let csv = 'Fecha,Establecimiento/Concepto,FolioUUID,MetodoPago,Categoria,Importe,Facturado\n';
+      expenses.forEach(e => {
+        csv += `"${e.date}","${e.desc.replace(/"/g, '""')}","${(e.uuid || '').replace(/"/g, '""')}","${e.method || 'Tarjeta'}","${e.cat}",${e.amount},"${e.invoice ? 'SI' : 'NO'}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Viaticos_Supervision_RENEM_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    // =======================================================
+    // MÓDULO 3: ACTIVIDADES DE CAMPO (2026_OK)
+    // =======================================================
+    let empresaCount = 0;
+
+    function createEmpresaBlock(num) {
+      const headerTitle = num === 1 ? 'EMPRESA VISITADA 1' : `ANEXO 1. EMPRESA VISITADA ${num}`;
+      return `
+        <div class="card" id="card-empresa-${num}">
+          <div class="card-title">
+            <span>${headerTitle}</span>
+            ${num > 1 ? `<button type="button" class="btn btn-danger" onclick="removeEmpresaCard(${num})">Eliminar Empresa</button>` : ''}
+          </div>
+          <div class="grid" style="margin-bottom: 12px;">
+            <div class="form-group"><label>Razón social:</label><input type="text" id="emp-${num}-rs"></div>
+            <div class="form-group"><label>Motivo de la visita (negativa, intercambio o pendiente por…):</label><input type="text" id="emp-${num}-motivo"></div>
+            <div class="form-group"><label>Nombre del Representante:</label><input type="text" id="emp-${num}-rep"></div>
+            <div class="form-group">
+              <label>El FACE es actualizado por:</label>
+              <div style="display:flex; gap:15px; padding-top: 8px;">
+                <label style="font-weight:normal; cursor:pointer;"><input type="radio" name="face-by-${num}" value="Informante"> el informante</label>
+                <label style="font-weight:normal; cursor:pointer;"><input type="radio" name="face-by-${num}" value="Representante"> por el representante del INEGI</label>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.95rem; font-weight: 600; margin: 12px 0 6px 0; color: #374151;">ASPECTOS OBSERVABLES</div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>ASPECTOS OBSERVABLES</th>
+                  <th style="text-align:center;">CUMPLE</th>
+                  <th style="text-align:center;">PARCIALMENTE</th>
+                  <th style="text-align:center;">NO CUMPLE</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${getQuestionsHTML(num)}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="font-size: 0.95rem; font-weight: 600; margin: 15px 0 6px 0; color: #374151;">Comprensión y llenado del FACE</div>
+          <div class="grid">
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>¿Qué opinión tiene la persona informante sobre la guía de llenado del FACE respecto a su utilidad, presentación, estructura y claridad? Describe:</label>
+              <textarea id="emp-${num}-opinion"></textarea>
+            </div>
+            <div class="form-group">
+              <label>¿Proporcionaste retroalimentación a la persona informante o al personal de la estructura?</label>
+              <select id="emp-${num}-retro-select">
+                <option value="No">No</option>
+                <option value="Sí">Sí</option>
+              </select>
+              <input type="text" id="emp-${num}-retro-desc" placeholder="Describe: ____________________" style="margin-top: 4px;">
+            </div>
+            <div class="form-group">
+              <label>¿El responsable del llenado del FACE comprende su manejo y la información que se solicitada?</label>
+              <select id="emp-${num}-comp-select">
+                <option value="Sí">Sí</option>
+                <option value="No">No</option>
+              </select>
+              <input type="text" id="emp-${num}-comp-vars" placeholder="¿Qué variables no comprende? Enlístalas a continuación:" style="margin-top: 4px;">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>¿Detectaste errores recurrentes durante el llenado del FACE?</label>
+              <select id="emp-${num}-err-select" style="max-width: 200px;">
+                <option value="No">No</option>
+                <option value="Sí">Sí</option>
+              </select>
+              <input type="text" id="emp-${num}-err-desc" placeholder="Enlista los errores: ____________________" style="margin-top: 4px;">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>*Describe lo que no aclaró:</label>
+              <input type="text" id="emp-${num}-no-aclaro">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>Notas:</label>
+              <textarea id="emp-${num}-notas"></textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getQuestionsHTML(num) {
+      const items = [
+        '¿Presenta su identificación?',
+        '¿Utiliza oficio de presentación?',
+        '¿Explica objetivo estadístico?',
+        '¿Atiende dudas correctamente?*',
+        '¿Proporciona la información de manera clara, precisa y efectiva?',
+        '¿Deja aviso de visita por ausencia o negativa de la persona informante?',
+        '¿Hace uso de la infografía del DENUE?',
+        '¿Hace uso de la infografía de acceso al aplicativo?'
+      ];
+
+      return items.map((q, idx) => `
+        <tr>
+          <td>${q}</td>
+          <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="Cumple"></td>
+          <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="Parcialmente"></td>
+          <td style="text-align:center;"><input type="radio" name="emp-${num}-q-${idx}" value="No cumple"></td>
+        </tr>
+      `).join('');
+    }
+
+    function addEmpresaCard() {
+      empresaCount++;
+      const container = document.getElementById('empresas-container');
+      const div = document.createElement('div');
+      div.id = `empresa-wrapper-${empresaCount}`;
+      div.innerHTML = createEmpresaBlock(empresaCount);
+      container.appendChild(div);
+    }
+
+    function removeEmpresaCard(num) {
+      const el = document.getElementById(`empresa-wrapper-${num}`);
+      if (el && confirm(`¿Deseas eliminar la sección de Empresa ${num}?`)) {
+        el.remove();
+      }
+    }
+
+    function addAgendaRow() {
+      const tbl = document.getElementById('tbl-agenda').getElementsByTagName('tbody')[0];
+      const tr = tbl.insertRow();
+      tr.innerHTML = `
+        <td><input type="text" style="width: 100%;"></td>
+        <td><input type="text" style="width: 100%;"></td>
+        <td><input type="text" style="width: 100%;"></td>
+        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td>
+      `;
+    }
+
+    function addFaceRow() {
+      const tbl = document.getElementById('tbl-faces-40a').getElementsByTagName('tbody')[0];
+      const tr = tbl.insertRow();
+      tr.innerHTML = `
+        <td><input type="text" style="width: 100%;"></td>
+        <td><input type="text" style="width: 100%;"></td>
+        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">✕</button></td>
+      `;
+    }
+
+    function removeRow(btn) {
+      btn.closest('tr').remove();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // =======================================================
+    // MÓDULO 4: EXPORTACIÓN EXCEL (.XLSX)
+    // =======================================================
+    function exportFullExcel() {
+      const wb = XLSX.utils.book_new();
+
+      // Viáticos
+      const budget = parseFloat(document.getElementById('initial-budget').value) || 0;
+      let expData = [
+        ["CONTROL DE VIÁTICOS Y COMPROBACIONES - RENEM 2026"],
+        ["Presupuesto Otorgado ($)", budget],
+        ["Destino", document.getElementById('commission-destination').value],
+        ["Periodo", document.getElementById('commission-dates').value],
+        [],
+        ["Fecha", "Establecimiento / Concepto", "Folio / UUID", "Método", "Categoría", "Importe ($)", "Facturado (CFDI)"]
+      ];
+      expenses.forEach(e => {
+        expData.push([e.date, e.desc, e.uuid || '', e.method, e.cat, e.amount, e.invoice ? "SÍ" : "NO"]);
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(expData), "Viáticos");
+
+      // Datos Generales
+      const wsDatosGen = XLSX.utils.aoa_to_sheet([
+        ["GUÍA DE SUPERVISIÓN, SEGUIMIENTO Y APOYO - RENEM 2026"],
+        ["Periodo", document.getElementById('gen-periodo').value],
+        ["Coordinación estatal visitada", document.getElementById('gen-ce').value],
+        ["Nombre y puesto del supervisor/a", document.getElementById('gen-supervisor').value]
+      ]);
+      XLSX.utils.book_append_sheet(wb, wsDatosGen, "Datos Generales");
+
+      // Gabinete
+      let gabData = [
+        ["ACTIVIDADES DE GABINETE"],
+        ["1. Seguimiento y Control Estatal - Notas", document.getElementById('gab-notas-1').value],
+        ["2. Intercambios recibidos - Notas", document.getElementById('gab-notas-2').value],
+        ["3. Estatus 1, 2, 3 y 4 - Notas", document.getElementById('gab-notas-3').value],
+        [],
+        ["ENVÍO DE FACE POR CORREO ELECTRÓNICO"],
+        ["Número de empresas contactadas", document.getElementById('gab-mail-contactadas').value],
+        ["Material adjunto enviado", document.getElementById('gab-mail-material').value],
+        ["Núm. de empresas que enviaron el FACE o directorio", document.getElementById('gab-mail-enviaron').value],
+        ["Notas Correo", document.getElementById('gab-notas-mail').value],
+        [],
+        ["ASIGNACIÓN DE CÓDIGOS DE RESULTADO"],
+        ["Total de inconsistencias detectadas", document.getElementById('gab-inconsistencias-tot').value],
+        ["Sin código asignado", document.getElementById('gab-sin-codigo').value],
+        ["El código no corresponde al estatus", document.getElementById('gab-no-corresponde').value],
+        ["Sin observaciones congruentes o completas", document.getElementById('gab-sin-observaciones').value],
+        ["Notas Códigos", document.getElementById('gab-notas-codigos').value],
+        [],
+        ["LISTADOS DE EMPRESAS"],
+        ["Notas Listados", document.getElementById('gab-notas-listados').value]
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(gabData), "Gabinete");
+
+      // Concentrado
+      const wsConcentrado = XLSX.utils.aoa_to_sheet([
+        ["CONCENTRADO DEL RESULTADO DE SUPERVISIÓN"],
+        ["Empresas revisadas en gabinete (FACE)", document.getElementById('conc-1').value],
+        ["Empresas visitadas en campo", document.getElementById('conc-2').value],
+        ["Empresas actualizadas durante la comisión (40A)", document.getElementById('conc-3').value],
+        ["Empresas con negativa visitadas", document.getElementById('conc-4').value],
+        ["Recuperación de FACE o directorios", document.getElementById('conc-5').value],
+        ["Inconsistencias detectadas en FACE", document.getElementById('conc-6').value],
+        [],
+        ["DESCARGABLES (APLICATIVO CONFORMACIÓN DE EMPRESAS)"],
+        ["Número de archivos", document.getElementById('desc-num').value],
+        ["Seguimiento a descargables", document.getElementById('desc-seguimiento').value]
+      ]);
+      XLSX.utils.book_append_sheet(wb, wsConcentrado, "Concentrado");
+
+      XLSX.writeFile(wb, `RENEM_2026_Conformacion_Empresas_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // =======================================================
+    // MÓDULO 5: EXPORTACIÓN A PDF
+    // =======================================================
+    function exportFullPDF() {
+      const originalStates = [];
+      const sections = document.querySelectorAll('.tab-content');
+      sections.forEach(sec => {
+        originalStates.push(sec.style.display);
+        sec.style.display = 'block';
+      });
+
+      const element = document.getElementById('printable-area');
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Informe_Supervision_RENEM_2026_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        sections.forEach((sec, idx) => {
+          sec.style.display = originalStates[idx];
+        });
+      });
+    }
+
+    // =======================================================
+    // PERSISTENCIA (LOCALSTORAGE Y JSON)
+    // =======================================================
+    function collectAllData() {
+      const data = {
+        expenses: expenses,
+        budget: document.getElementById('initial-budget').value,
+        destination: document.getElementById('commission-destination').value,
+        dates: document.getElementById('commission-dates').value,
+        inputs: {},
+        textareas: {},
+        selects: {},
+        radios: {},
+        empresaCount: empresaCount
+      };
+
+      document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(el => {
+        if (el.id) data.inputs[el.id] = el.value;
+      });
+
+      document.querySelectorAll('textarea').forEach(el => {
+        if (el.id) data.textareas[el.id] = el.value;
+      });
+
+      document.querySelectorAll('select').forEach(el => {
+        if (el.id) data.selects[el.id] = el.value;
+      });
+
+      document.querySelectorAll('input[type="radio"]:checked').forEach(el => {
+        data.radios[el.name] = el.value;
+      });
+
+      return data;
+    }
+
+    function restoreData(data) {
+      if (!data) return;
+
+      if (data.budget) document.getElementById('initial-budget').value = data.budget;
+      if (data.destination) document.getElementById('commission-destination').value = data.destination;
+      if (data.dates) document.getElementById('commission-dates').value = data.dates;
+      if (data.expenses) {
+        expenses = data.expenses;
+        renderExpenses();
+      }
+
+      const targetEmpresas = data.empresaCount || 4;
+      const currentCards = document.querySelectorAll('#empresas-container > div').length;
+      for (let i = currentCards + 1; i <= targetEmpresas; i++) {
+        addEmpresaCard();
+      }
+
+      if (data.inputs) {
+        Object.keys(data.inputs).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = data.inputs[id];
+        });
+      }
+
+      if (data.textareas) {
+        Object.keys(data.textareas).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = data.textareas[id];
+        });
+      }
+
+      if (data.selects) {
+        Object.keys(data.selects).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = data.selects[id];
+        });
+      }
+
+      if (data.radios) {
+        Object.keys(data.radios).forEach(name => {
+          const radio = document.querySelector(`input[name="${name}"][value="${data.radios[name]}"]`);
+          if (radio) radio.checked = true;
+        });
+      }
+
+      calculateExpenses();
+    }
+
+    function saveToStorage() {
+      const data = collectAllData();
+      localStorage.setItem('RENEM_SUPERVISION_DATA_CLASSIC', JSON.stringify(data));
+      alert('¡Datos guardados con éxito en la memoria del dispositivo!');
+    }
+
+    function autoSave() {
+      const data = collectAllData();
+      localStorage.setItem('RENEM_SUPERVISION_DATA_CLASSIC', JSON.stringify(data));
+    }
+
+    function exportJSON() {
+      const data = collectAllData();
+      const sup = (document.getElementById('gen-supervisor').value || 'Comisionado').trim().replace(/\s+/g, '_');
+      const ce = (document.getElementById('gen-ce').value || 'CE').trim().replace(/\s+/g, '_');
+      const fecha = new Date().toISOString().slice(0, 10);
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Respaldo_${sup}_${ce}_${fecha}.json`;
+      link.click();
+    }
+
+    function triggerImport() {
+      document.getElementById('importInput').click();
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          restoreData(data);
+          alert('¡Respaldo restaurado!');
+        } catch (err) {
+          alert('Archivo no válido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+      }
+
+      for (let i = 1; i <= 4; i++) {
+        addEmpresaCard();
+      }
+
+      const saved = localStorage.getItem('RENEM_SUPERVISION_DATA_CLASSIC');
+      if (saved) {
+        try {
+          restoreData(JSON.parse(saved));
+        } catch(e) {
+          renderExpenses();
+        }
+      } else {
+        renderExpenses();
+      }
+
+      document.getElementById('exp-date').value = new Date().toISOString().slice(0, 10);
+    });
+  </script>
+</body>
+</html>
