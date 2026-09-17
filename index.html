@@ -4,13 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conformación de Empresas | Comisión 2026</title>
-  
-  <!-- Librería nativa para crear y exportar archivos Word (.docx) -->
-  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- PDF y OCR para validación fiscal -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root {
@@ -232,15 +225,6 @@
     .badge-billed { background: #d1fae5; color: #065f46; }
     .badge-unbilled { background: #fee2e2; color: #991b1b; }
 
-    .drop-zone {
-      border: 2px dashed #93c5fd;
-      background-color: #f8fafc;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-    }
-
     .profile-banner {
       background: #eff6ff;
       border: 1px solid #bfdbfe;
@@ -264,7 +248,7 @@
         <small style="color: #93c5fd; font-size: 0.75rem;">Operativo RENEM • Generador Oficial de Documento Word</small>
       </div>
       <div class="action-buttons">
-        <button type="button" class="btn btn-word" onclick="generateAndDownloadWord()">📘 Descargar en Word (.docx)</button>
+        <button type="button" class="btn btn-word" onclick="downloadWordDocument()">📄 Descargar en Word (.doc)</button>
         <button type="button" class="btn btn-save" onclick="saveToStorage(true)">💾 Guardar</button>
         <button type="button" class="btn btn-cloud" onclick="syncToCloud(event)">☁️ Sincronizar Nube</button>
         <button type="button" class="btn btn-export" onclick="exportJSON()">📤 Respaldar</button>
@@ -274,7 +258,7 @@
     </div>
     <nav class="nav-tabs">
       <button type="button" class="tab-btn active" onclick="switchTab('tab-viaticos')">💰 Control de Viáticos y 20%</button>
-      <button type="button" class="tab-btn" onclick="switchTab('tab-fiscal')">🔍 Verificador Fiscal / RFC INEGI</button>
+      <button type="button" class="tab-btn" onclick="switchTab('tab-fiscal')">🔍 Ficha Fiscal INEGI</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-gabinete')">🏢 Actividades Gabinete</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-campo')">🚗 Actividades Campo</button>
       <button type="button" class="tab-btn" onclick="switchTab('tab-concentrado')">📊 Concentrado y Descargables</button>
@@ -283,10 +267,10 @@
 
   <main class="container">
 
-    <!-- PERFIL DEL COMISIONADO (SIEMPRE VISIBLE PARA VINCULAR DATOS) -->
+    <!-- DATOS VINCULADOS DEL COMISIONADO (SIEMPRE VISIBLES) -->
     <div class="profile-banner">
       <div class="form-group">
-        <label style="color:#1e40af;">👤 Nombre y Puesto del Supervisor/a:[cite: 2]</label>
+        <label style="color:#1e40af;">👤 Nombre y Puesto del Supervisor/a:</label>
         <input type="text" id="gen-supervisor" placeholder="Ej. Juan Pérez - Supervisor de Campo" oninput="autoSave()">
       </div>
       <div class="form-group">
@@ -294,12 +278,12 @@
         <input type="email" id="gen-email" placeholder="ejemplo@inegi.org.mx" oninput="autoSave()">
       </div>
       <div class="form-group">
-        <label style="color:#1e40af;">📍 Coordinación Estatal Visitada:[cite: 2]</label>
-        <input type="text" id="gen-ce" placeholder="Ej. Tabasco" oninput="autoSave()">
+        <label style="color:#1e40af;">📍 Coordinación Estatal Visitada:</label>
+        <input type="text" id="gen-ce" placeholder="Ej. Tabasco" oninput="syncDestino(this.value)">
       </div>
       <div class="form-group">
-        <label style="color:#1e40af;">📅 Periodo de la Comisión:[cite: 2]</label>
-        <input type="text" id="gen-periodo" placeholder="Ej. 21 al 26 de Septiembre de 2026" oninput="autoSave()">
+        <label style="color:#1e40af;">📅 Periodo de la Comisión:</label>
+        <input type="text" id="gen-periodo" placeholder="Ej. 21 al 26 de Septiembre de 2026" oninput="syncPeriodo(this.value)">
       </div>
     </div>
 
@@ -339,11 +323,11 @@
           </div>
           <div class="form-group">
             <label for="commission-destination">Destino / Coordinación Visitada:</label>
-            <input type="text" id="commission-destination" placeholder="Ej. Tabasco" oninput="syncDestino(this.value)">
+            <input type="text" id="commission-destination" placeholder="Ej. Tabasco" oninput="syncFromDestino(this.value)">
           </div>
           <div class="form-group">
             <label for="commission-dates">Periodo de Comisión:</label>
-            <input type="text" id="commission-dates" placeholder="Ej. 21 al 26 de Septiembre" oninput="syncPeriodo(this.value)">
+            <input type="text" id="commission-dates" placeholder="Ej. 21 al 26 de Septiembre de 2026" oninput="syncFromPeriodo(this.value)">
           </div>
         </div>
       </div>
@@ -418,31 +402,19 @@
       </div>
     </section>
 
-    <!-- ================= PESTAÑA: VERIFICADOR FISCAL ================= -->
+    <!-- ================= PESTAÑA: FICHA FISCAL INEGI ================= -->
     <section id="tab-fiscal" class="tab-content">
       <div class="card">
-        <div class="card-title">Datos Fiscales Oficiales INEGI (CFDI 4.0)</div>
+        <div class="card-title">
+          <span>Datos Fiscales Oficiales INEGI (CFDI 4.0)</span>
+          <button type="button" class="btn" style="background:#e0e7ff; color:#3730a3;" onclick="copyFiscalData()">📋 Copiar Ficha</button>
+        </div>
         <div class="grid">
           <div><strong>RFC:</strong> INE0804164Z7</div>
           <div><strong>Razón Social:</strong> INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA</div>
           <div><strong>Régimen:</strong> 603 - Personas Morales con Fines no Lucrativos</div>
           <div><strong>C.P. Fiscal:</strong> 20276</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Cargar Factura o Fotografía para Validación Automática</div>
-        <div class="drop-zone" onclick="document.getElementById('invoiceFileInput').click()">
-          <div style="font-size: 1.8rem;">📷 / 📄</div>
-          <strong>Toca aquí para tomar foto o cargar PDF / XML</strong>
-          <input type="file" id="invoiceFileInput" style="display:none;" accept="image/*,application/pdf,text/xml,.xml" onchange="processUploadedInvoice(event)">
-        </div>
-        <div id="ocr-loader" style="display:none; text-align:center; margin-top:10px; color:var(--info);">⏳ Procesando comprobante...</div>
-        <div id="validation-report" style="display:none; margin-top:15px;">
-          <p><strong>Emisor:</strong> <span id="res-vendor-text">-</span></p>
-          <p><strong>Total:</strong> <span id="res-amount-text">$0.00</span></p>
-          <p><strong>Folio/UUID:</strong> <span id="res-uuid-text">-</span></p>
-          <button type="button" class="btn btn-save" onclick="transferInvoiceToExpenses()" style="margin-top:10px;">➕ Cargar a Viáticos</button>
+          <div style="grid-column: 1 / -1;"><strong>Domicilio:</strong> Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.</div>
         </div>
       </div>
     </section>
@@ -457,18 +429,19 @@
 
       <div class="card">
         <div class="card-title">Intercambios recibidos[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Verifica el seguimiento y la atención que se les da. Si no han sido verificados en campo, agrégalos a la agenda de campo para favorecer la obtención de la información. Pregunta si hay intercambios pendientes por parte de la entidad destino para agilizar la atención con enlace central.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Verifica el seguimiento y la atención que se les da.[cite: 2] Si no han sido verificados en campo, agrégalos a la agenda de campo para favorecer la obtención de la información.[cite: 2] Pregunta; si hay intercambios que se encuentren pendientes de respuesta por parte de la entidad destino, con la finalidad de que te coordines con el enlace central correspondiente y agilizar la atención.[cite: 2]</p>
         <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-2" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
         <div class="card-title">Estatus 1, 2, 3 y 4[cite: 2]</div>
-        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Pregunta por las empresas con el propósito de identificar las situaciones que pudieran estar retrasando la entrega del FACE y da seguimiento a las acciones necesarias para favorecer la recuperación oportuna.[cite: 2]</p>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Pregunta por las empresas con el propósito de identificar las situaciones que pudieran estar retrasando la entrega del FACE y da seguimiento a las acciones necesarias para favorecer la recuperación oportuna de la información.[cite: 2]</p>
         <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-3" oninput="autoSave()"></textarea></div>
       </div>
 
       <div class="card">
         <div class="card-title">Envío por correo electrónico[cite: 2]</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Confirma que se dé seguimiento puntual a las empresas que se comprometieron en enviar su información por correo electrónico, además, solicita los correos enviados a las personas informantes y registra lo siguiente:[cite: 2]</p>
         <div class="table-responsive">
           <table>
             <thead>
@@ -495,6 +468,7 @@
           <span>Agenda de campo[cite: 2]</span>
           <button type="button" class="btn btn-add" onclick="addAgendaRow()">➕ Fila</button>
         </div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Elabora una agenda de campo, con base en la revisión realizada, procurando visitar empresas en situación de pendiente, negativa o que provengan de un intercambio; en acompañamiento de una persona representante.[cite: 2] Da prioridad a las empresas con las que no se ha establecido contacto o las que no han respondido las solicitudes de información.[cite: 2] La agenda debe integrarse por al menos 3 empresas o más, durante tu comisión.[cite: 2]</p>
         <div class="table-responsive">
           <table id="tbl-agenda">
             <thead>
@@ -511,6 +485,7 @@
 
       <div class="card">
         <div class="card-title">Asignación de los códigos de resultado[cite: 2]</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revisa en el aplicativo, que el ECM/JCAD asigne los códigos y que estos sean congruentes con el estatus (1 al 9), asimismo que las observaciones correspondan.[cite: 2]</p>
         <div class="table-responsive">
           <table>
             <thead>
@@ -536,6 +511,7 @@
 
       <div class="card">
         <div class="card-title">Listados de empresas[cite: 2]</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Revísalos a fin de corroborar su utilización y conocer el método de actualización más usado, además, verifica las fechas compromiso para la devolución del FACE y el registro oportuno de las visitas.[cite: 2]</p>
         <div class="form-group"><label>Notas:[cite: 2]</label><textarea id="gab-notas-listados" oninput="autoSave()"></textarea></div>
       </div>
 
@@ -544,6 +520,7 @@
           <span>Revisión de 5 FACE con código 40A[cite: 2]</span>
           <button type="button" class="btn btn-add" onclick="addFaceRow()">➕ Fila</button>
         </div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Cuestionario captado con información completa, verificando que la información registrada sea válida, consistente y congruente, además, identifica los registros que se dieron de alta y las bajas.[cite: 2] En caso de detectar inconsistencias, informa al ECM/JCAD para que retroalimente al equipo y, en su caso, se lleven a cabo las acciones correctivas correspondientes.[cite: 2] Para esta actividad puedes apoyarte en el FD y en las instrucciones de llenado.[cite: 2]</p>
         <div class="table-responsive">
           <table id="tbl-faces-40a">
             <thead>
@@ -556,13 +533,15 @@
             </tbody>
           </table>
         </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de requerirse, apoya en la captura o revisión de los directorios remitidos por los informantes a la oficina, verificando la congruencia de la información antes de su integración al FACE e ingresarlo al aplicativo web Conformación de Empresas.[cite: 2]</p>
       </div>
     </section>
 
     <!-- ================= PESTAÑA: ACTIVIDADES DE CAMPO ================= -->
     <section id="tab-campo" class="tab-content">
       <div class="card">
-        <div class="card-title">Agenda de campo[cite: 2]</div>
+        <div class="card-title">Actividades de campo – Identifica áreas de oportunidad –[cite: 2]</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:8px;">Agenda de campo.[cite: 2] Acompaña a la persona representante durante las actividades de campo de acuerdo con la agenda prevista.[cite: 2] En los casos de empresas con negativa, brinda apoyo en la sensibilización de los informantes, puedes apoyarte de la infografía del DENUE y de tu conocimiento del sistema de consulta.[cite: 2] Retroalimenta a la persona representante en los temas que requiera.[cite: 2]</p>
         <div class="table-responsive" style="max-width:500px;">
           <table>
             <thead><tr><th style="width:60px;">Núm.[cite: 2]</th><th>Razón social[cite: 2]</th></tr></thead>
@@ -645,6 +624,7 @@
 
       <div class="card">
         <div class="card-title">Descargables (Aplicativo Web Conformación de Empresas)[cite: 2]</div>
+        <p style="font-size:0.85rem; color:#4b5563; margin-bottom:6px;">Ingresa al aplicativo web, en la pestaña descargables, y llena la siguiente información:[cite: 2]</p>
         <div class="table-responsive">
           <table>
             <thead>
@@ -668,24 +648,33 @@
             </tbody>
           </table>
         </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">En caso de detectar que no se está llevando a cabo la actualización del FACE con los directorios depositados por las empresas, brinda la retroalimentación necesaria.[cite: 2]</p>
       </div>
     </section>
 
   </main>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_zOhyg1X6aTWEOnQzx3OMMBO4T3r4YYjnIU6My5oUQTchiEC9eapEsZQQHP2BWQec5g/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/TU_ID_AQUI/exec";
 
     let expenses = [
-      { id: 1, date: '2026-09-17', desc: 'Hotel estancia', uuid: '', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje / Hotel', invoice: true }
+      { id: 1, date: '2026-09-17', desc: 'Hotel de estancia', uuid: '', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje / Hotel', invoice: true }
     ];
     let empresaCount = 0;
 
     function syncDestino(val) {
-      document.getElementById('gen-ce').value = val;
+      document.getElementById('commission-destination').value = val;
       autoSave();
     }
     function syncPeriodo(val) {
+      document.getElementById('commission-dates').value = val;
+      autoSave();
+    }
+    function syncFromDestino(val) {
+      document.getElementById('gen-ce').value = val;
+      autoSave();
+    }
+    function syncFromPeriodo(val) {
       document.getElementById('gen-periodo').value = val;
       autoSave();
     }
@@ -802,6 +791,11 @@
       document.getElementById('unbilled-subtext').innerText = `Sin factura: $${rawUninvoicedTotal.toFixed(2)} (Amparado: $${allowance.toFixed(2)})`;
     }
 
+    function copyFiscalData() {
+      const text = `RFC: INE0804164Z7\nRazón Social: INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen Fiscal: 603 - Personas Morales con Fines no Lucrativos\nCódigo Postal: 20276\nUso de CFDI: G03 - Gastos en general\nDomicilio: Av. Héroe de Nacozari Sur 2301, Fracc. Jardines del Parque, C.P. 20276, Aguascalientes, Ags.`;
+      navigator.clipboard.writeText(text).then(() => alert('¡Ficha fiscal copiada al portapapeles!'));
+    }
+
     function createEmpresaBlock(num) {
       const headerTitle = num === 1 ? 'EMPRESA VISITADA 1' : `ANEXO 1. EMPRESA VISITADA ${num}`;
       const items = [
@@ -853,10 +847,10 @@
           </div>
 
           <div class="grid" style="margin-top:12px;">
-            <div class="form-group" style="grid-column:1/-1;"><label>¿Qué opinión tiene la persona informante sobre la guía de llenado del FACE (utilidad, presentación, estructura, claridad)? Describe:[cite: 2]</label><textarea id="emp-${num}-opinion" oninput="autoSave()"></textarea></div>
-            <div class="form-group"><label>¿Proporcionaste retroalimentación a la persona informante o personal?[cite: 2]</label><input type="text" id="emp-${num}-retro-desc" placeholder="Describe..." oninput="autoSave()"></div>
-            <div class="form-group"><label>¿El informante comprende el manejo y la información solicitada?[cite: 2]</label><input type="text" id="emp-${num}-comp-vars" placeholder="¿Qué variables no comprende?" oninput="autoSave()"></div>
-            <div class="form-group"><label>¿Detectaste errores recurrentes durante el llenado del FACE?[cite: 2]</label><input type="text" id="emp-${num}-err-desc" placeholder="Enlista los errores..." oninput="autoSave()"></div>
+            <div class="form-group" style="grid-column:1/-1;"><label>¿Qué opinión tiene la persona informante sobre la guía de llenado del FACE respecto a su utilidad, presentación, estructura y claridad? Describe:[cite: 2]</label><textarea id="emp-${num}-opinion" oninput="autoSave()"></textarea></div>
+            <div class="form-group"><label>¿Proporcionaste retroalimentación a la persona informante o al personal de la estructura? Describe:[cite: 2]</label><input type="text" id="emp-${num}-retro-desc" placeholder="Describe..." oninput="autoSave()"></div>
+            <div class="form-group"><label>¿El responsable del llenado del FACE comprende su manejo y la información que se solicitada? ¿Qué variables no comprende?[cite: 2]</label><input type="text" id="emp-${num}-comp-vars" placeholder="Enlístalas a continuación..." oninput="autoSave()"></div>
+            <div class="form-group"><label>¿Detectaste errores recurrentes durante el llenado del FACE? Enlista los errores:[cite: 2]</label><input type="text" id="emp-${num}-err-desc" placeholder="Enlista los errores..." oninput="autoSave()"></div>
             <div class="form-group"><label>*Describe lo que no aclaró:[cite: 2]</label><input type="text" id="emp-${num}-no-aclaro" oninput="autoSave()"></div>
             <div class="form-group" style="grid-column:1/-1;"><label>Notas:[cite: 2]</label><textarea id="emp-${num}-notas" oninput="autoSave()"></textarea></div>
           </div>
@@ -882,121 +876,161 @@
     }
 
     // =======================================================
-    // GENERADOR PROFESIONAL DE DOCUMENTO EN WORD (.DOCX)
+    // GENERADOR DIRECTO DE WORD NATIVO (.DOC COMPATIBLE)
     // =======================================================
-    async function generateAndDownloadWord() {
-      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docx;
-
-      const sup = document.getElementById('gen-supervisor').value || 'Sin_Nombre';
+    function downloadWordDocument() {
+      const sup = document.getElementById('gen-supervisor').value || 'Comisionado';
       const ce = document.getElementById('gen-ce').value || 'Estatal';
       const per = document.getElementById('gen-periodo').value || '';
       const email = document.getElementById('gen-email').value || '';
 
-      const pTitle = (text, size = 24, bold = true) => new Paragraph({
-        children: [new TextRun({ text, bold, size, font: "Arial" })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 120 }
-      });
-
-      const pHeading = (text) => new Paragraph({
-        children: [new TextRun({ text, bold: true, size: 22, color: "1B365D", font: "Arial" })],
-        spacing: { before: 240, after: 80 }
-      });
-
-      const pBody = (label, val = "") => new Paragraph({
-        children: [
-          new TextRun({ text: label + ": ", bold: true, size: 20, font: "Arial" }),
-          new TextRun({ text: val || "_______________", size: 20, font: "Arial" })
-        ],
-        spacing: { after: 80 }
-      });
-
-      // Filas de Viáticos
-      const viatRows = [
-        new TableRow({
-          children: ["Fecha", "Concepto / Establecimiento", "Folio/UUID", "Método", "Importe ($)", "Factura (CFDI)"].map(h => 
-            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 18 })] })] })
-          )
-        })
-      ];
+      // Construcción de tablas de viáticos
+      let viaticosRows = '';
       expenses.forEach(e => {
-        viatRows.push(new TableRow({
-          children: [e.date, e.desc, e.uuid || '-', e.method, `$${e.amount.toFixed(2)}`, e.invoice ? "SÍ" : "NO"].map(val =>
-            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(val), size: 18 })] })] })
-          )
-        }));
+        viaticosRows += `
+          <tr>
+            <td style="border:1px solid #000; padding:5px;">${e.date}</td>
+            <td style="border:1px solid #000; padding:5px;">${e.desc}</td>
+            <td style="border:1px solid #000; padding:5px;">${e.uuid || '-'}</td>
+            <td style="border:1px solid #000; padding:5px;">${e.method}</td>
+            <td style="border:1px solid #000; padding:5px;">${e.cat}</td>
+            <td style="border:1px solid #000; padding:5px;">$${e.amount.toFixed(2)}</td>
+            <td style="border:1px solid #000; padding:5px;">${e.invoice ? 'SÍ' : 'NO'}</td>
+          </tr>
+        `;
       });
 
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            pTitle("Dirección General Adjunta de Registros Administrativos Económicos", 20, false),
-            pTitle("Dirección de Diseño, Captación y Evaluación del Registro de Negocios", 20, false),
-            pTitle("Subdirección de Captación en Campo", 20, false),
-            pTitle("GUÍA DE SUPERVISIÓN, SEGUIMIENTO Y APOYO AL OPERATIVO DE ACTUALIZACIÓN DE LA CONFORMACIÓN DE EMPRESAS DEL RENEM 2026", 24, true),
-            new Paragraph({ text: "" }),
-            pBody("Periodo", per),
-            pBody("Coordinación estatal visitada", ce),
-            pBody("Nombre y puesto del supervisor/a", sup),
-            pBody("Correo electrónico institucional", email),
+      const wordContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Guía de Supervisión RENEM 2026</title>
+          <style>
+            body { font-family: Arial, sans-serif; font-size: 11pt; }
+            h2, h3, h4 { color: #1B365D; margin-top: 15px; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 12px; }
+            th { background-color: #E2E8F0; border: 1px solid #000; padding: 6px; font-weight: bold; text-align: left; }
+            td { border: 1px solid #000; padding: 6px; }
+            .header-inegi { text-align: center; font-size: 10pt; font-weight: bold; margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header-inegi">
+            Dirección General Adjunta de Registros Administrativos Económicos<br>
+            Dirección de Diseño, Captación y Evaluación del Registro de Negocios<br>
+            Subdirección de Captación en Campo<br><br>
+            <span style="font-size: 13pt;">GUÍA DE SUPERVISIÓN, SEGUIMIENTO Y APOYO AL OPERATIVO DE ACTUALIZACIÓN DE LA CONFORMACIÓN DE EMPRESAS DEL RENEM 2026</span>
+          </div>
 
-            pHeading("Objetivos"),
-            new Paragraph({
-              children: [new TextRun({
-                text: "• Dar seguimiento a la aplicación de la estrategia operativa establecida para la actualización de la conformación de empresas, mediante la observación del uso adecuado de los formatos de control establecidos.\n• Detectar áreas de oportunidad en la estrategia operativa, los procedimientos y los instrumentos de captación de información, mediante el acompañamiento a las personas representantes.",
-                size: 20
-              })]
-            }),
+          <p><strong>Periodo:</strong> ${per}</p>
+          <p><strong>Coordinación estatal visitada:</strong> ${ce}</p>
+          <p><strong>Nombre y puesto del supervisor/a:</strong> ${sup}</p>
+          <p><strong>Correo electrónico:</strong> ${email}</p>
 
-            pHeading("Actividades de gabinete"),
-            pBody("Formato de Seguimiento y Control Estatal - Notas", document.getElementById('gab-notas-1').value),
-            pBody("Intercambios recibidos - Notas", document.getElementById('gab-notas-2').value),
-            pBody("Estatus 1, 2, 3 y 4 - Notas", document.getElementById('gab-notas-3').value),
-            pBody("Envío por correo (Contactadas)", document.getElementById('gab-mail-contactadas').value),
-            pBody("Material adjunto enviado", document.getElementById('gab-mail-material').value),
-            pBody("Empresas que enviaron FACE", document.getElementById('gab-mail-enviaron').value),
-            pBody("Notas Correos", document.getElementById('gab-notas-mail').value),
-            pBody("Asignación de códigos (Inconsistencias totales)", document.getElementById('gab-inconsistencias-tot').value),
-            pBody("Notas Códigos y Listados", document.getElementById('gab-notas-codigos').value),
+          <h3>Objetivos</h3>
+          <p>• Dar seguimiento a la aplicación de la estrategia operativa establecida para la actualización de la conformación de empresas, mediante la observación del uso adecuado de los formatos de control establecidos.<br>
+          • Detectar áreas de oportunidad en la estrategia operativa, los procedimientos y los instrumentos de captación de información, mediante el acompañamiento a las personas representantes que participan en las actividades establecidas para la actualización de la conformación de empresas.</p>
 
-            pHeading("Concentrado de Supervisión"),
-            pBody("Empresas revisadas en gabinete (FACE)", document.getElementById('conc-1').value),
-            pBody("Empresas visitadas en campo", document.getElementById('conc-2').value),
-            pBody("Empresas actualizadas durante la comisión (40A)", document.getElementById('conc-3').value),
-            pBody("Empresas con negativa visitadas", document.getElementById('conc-4').value),
-            pBody("Recuperación de FACE o directorios", document.getElementById('conc-5').value),
-            pBody("Inconsistencias detectadas en FACE", document.getElementById('conc-6').value),
+          <h3>Instrucciones generales</h3>
+          <p>Compañera(o), el primer día de tu comisión preséntate con el/la SEE y JDEERA para informarles el propósito y periodo de tu visita, el área de adscripción en oficinas centrales y los requerimientos necesarios para el cumplimiento de tu comisión. Durante tu encomienda, reparte las actividades de campo y gabinete como se te vayan acomodando, sin perder de vista que todas ellas deben llevarse a cabo.</p>
 
-            pHeading("Anexo de Viáticos y Gastos Comprobados"),
-            pBody("Presupuesto Otorgado ($)", document.getElementById('initial-budget').value),
-            pBody("Destino", document.getElementById('commission-destination').value),
-            new Paragraph({ text: "" }),
-            new Table({
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              rows: viatRows
-            }),
+          <h3>Actividades de gabinete</h3>
+          <p><strong>Revisa el formato de Seguimiento y Control Estatal - Notas:</strong><br>${document.getElementById('gab-notas-1').value || 'Sin notas'}</p>
+          <p><strong>Intercambios recibidos - Notas:</strong><br>${document.getElementById('gab-notas-2').value || 'Sin notas'}</p>
+          <p><strong>Estatus 1, 2, 3 y 4 - Notas:</strong><br>${document.getElementById('gab-notas-3').value || 'Sin notas'}</p>
 
-            pHeading("Firmas de Entrega y Recepción"),
-            new Paragraph({ text: "" }),
-            new Paragraph({ text: "" }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: "____________________________________             ____________________________________\n", bold: true }),
-                new TextRun({ text: "Supervisor/a Comisionado (Firma)                      JDEERA / ECM Recibido y Sello", bold: true })
-              ],
-              alignment: AlignmentType.CENTER
-            })
-          ]
-        }]
-      });
+          <h4>ENVÍO DE FACE POR CORREO ELECTRÓNICO</h4>
+          <table>
+            <tr>
+              <th>Número de empresas contactadas</th>
+              <th>Material adjunto enviado</th>
+              <th>Núm. de empresas que enviaron el FACE o directorio</th>
+            </tr>
+            <tr>
+              <td>${document.getElementById('gab-mail-contactadas').value || '0'}</td>
+              <td>${document.getElementById('gab-mail-material').value || '-'}</td>
+              <td>${document.getElementById('gab-mail-enviaron').value || '0'}</td>
+            </tr>
+          </table>
+          <p><strong>Notas Correo:</strong> ${document.getElementById('gab-notas-mail').value || 'Sin notas'}</p>
 
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, `Guia_Supervision_RENEM_${sup.replace(/\s+/g, '_')}_2026.docx`);
+          <h4>ASIGNACIÓN DE CÓDIGOS DE RESULTADO</h4>
+          <table>
+            <tr>
+              <th>Total de inconsistencias detectadas</th>
+              <th>Sin código asignado</th>
+              <th>El código no corresponde al estatus</th>
+              <th>Sin observaciones congruentes o completas</th>
+            </tr>
+            <tr>
+              <td>${document.getElementById('gab-inconsistencias-tot').value || '0'}</td>
+              <td>${document.getElementById('gab-sin-codigo').value || '0'}</td>
+              <td>${document.getElementById('gab-no-corresponde').value || '0'}</td>
+              <td>${document.getElementById('gab-sin-observaciones').value || '0'}</td>
+            </tr>
+          </table>
+          <p><strong>Notas Códigos:</strong> ${document.getElementById('gab-notas-codigos').value || 'Sin notas'}</p>
+          <p><strong>Listados de empresas - Notas:</strong> ${document.getElementById('gab-notas-listados').value || 'Sin notas'}</p>
+
+          <h3>Concentrado del resultado de las actividades de supervisión</h3>
+          <table>
+            <tr><th>CONCEPTO</th><th style="width:150px;">CANTIDAD</th></tr>
+            <tr><td>Empresas revisadas en gabinete (FACE)</td><td>${document.getElementById('conc-1').value || '0'}</td></tr>
+            <tr><td>Empresas visitadas en campo</td><td>${document.getElementById('conc-2').value || '0'}</td></tr>
+            <tr><td>Empresas actualizadas durante la comisión (40A)</td><td>${document.getElementById('conc-3').value || '0'}</td></tr>
+            <tr><td>Empresas con negativa visitadas</td><td>${document.getElementById('conc-4').value || '0'}</td></tr>
+            <tr><td>Recuperación de FACE o directorios</td><td>${document.getElementById('conc-5').value || '0'}</td></tr>
+            <tr><td>Inconsistencias detectadas en los FACE</td><td>${document.getElementById('conc-6').value || '0'}</td></tr>
+          </table>
+
+          <h3>Anexo: Control y Comprobación de Viáticos</h3>
+          <p><strong>Presupuesto Asignado:</strong> $${document.getElementById('initial-budget').value || '0.00'}<br>
+          <strong>Destino:</strong> ${document.getElementById('commission-destination').value || '-'}</p>
+          <table>
+            <tr>
+              <th>Fecha</th>
+              <th>Concepto / Establecimiento</th>
+              <th>Folio/UUID</th>
+              <th>Método</th>
+              <th>Categoría</th>
+              <th>Importe</th>
+              <th>Facturado</th>
+            </tr>
+            ${viaticosRows}
+          </table>
+
+          <br><br><br>
+          <table style="border:none; width:100%;">
+            <tr style="border:none;">
+              <td style="border:none; text-align:center; width:50%;">
+                __________________________________________<br>
+                <strong>${sup}</strong><br>
+                Supervisor/a Comisionado
+              </td>
+              <td style="border:none; text-align:center; width:50%;">
+                __________________________________________<br>
+                <strong>SEE / JDEERA / ECM</strong><br>
+                Recibido y Sello de la Coordinación Estatal
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff' + wordContent], { type: 'application/msword' });
+      const filename = `Guia_Supervision_RENEM_${sup.trim().replace(/\s+/g, '_')}_2026.doc`;
+
+      const downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = filename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
     }
 
     // =======================================================
-    // PERSISTENCIA INTELIGENTE (LOCALSTORAGE AUTOMÁTICO)
+    // PERSISTENCIA INTELIGENTE (LOCALSTORAGE INMEDIATO)
     // =======================================================
     function collectAllData() {
       const data = {
@@ -1033,12 +1067,12 @@
 
     function autoSave() {
       const data = collectAllData();
-      localStorage.setItem('RENEM_2026_PERSISTENT_DATA', JSON.stringify(data));
+      localStorage.setItem('RENEM_2026_CLEAN_DATA', JSON.stringify(data));
     }
 
     function saveToStorage(notify = false) {
       autoSave();
-      if (notify) alert('¡Información guardada con éxito en el dispositivo!');
+      if (notify) alert('¡Información guardada con éxito en este dispositivo!');
     }
 
     function restoreData(data) {
@@ -1075,7 +1109,10 @@
       const data = collectAllData();
       const sup = (data.supervisor || 'Comisionado').trim().replace(/\s+/g, '_');
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      saveAs(blob, `Respaldo_${sup}_RENEM_2026.json`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Respaldo_${sup}_RENEM_2026.json`;
+      a.click();
     }
 
     function importJSON(e) {
@@ -1113,9 +1150,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        alert(`¡Información de ${sup} enviada con éxito!`);
+        alert(`¡Información de ${sup} sincronizada con éxito en la nube!`);
       } catch (err) {
-        alert("Error de red al conectar. Tus datos siguen seguros en tu teléfono o PC.");
+        alert("Error de conexión. Tus datos están seguros en tu navegador.");
       } finally {
         btn.innerText = "☁️ Sincronizar Nube";
         btn.disabled = false;
@@ -1123,11 +1160,9 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // 4 empresas iniciales
       for (let i = 1; i <= 4; i++) addEmpresaCard();
 
-      // Restaurar automáticamente la memoria
-      const saved = localStorage.getItem('RENEM_2026_PERSISTENT_DATA');
+      const saved = localStorage.getItem('RENEM_2026_CLEAN_DATA');
       if (saved) {
         try { restoreData(JSON.parse(saved)); } catch(e) { renderExpenses(); }
       } else {
