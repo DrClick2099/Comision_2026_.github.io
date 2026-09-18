@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Viáticos</title>
+  <title>Viáticos | RENEM</title>
 
   <!-- Motores de lectura y OCR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
@@ -49,14 +49,14 @@
       background-color: var(--bg);
       color: var(--label);
       line-height: 1.4;
-      padding-bottom: 40px;
+      padding-bottom: 50px;
     }
 
     /* iOS Navigation Bar */
     .nav-bar {
       position: sticky;
       top: 0;
-      background-color: rgba(255, 255, 255, 0.82);
+      background-color: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 0.5px solid var(--separator);
@@ -65,7 +65,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      .nav-bar { background-color: rgba(28, 28, 30, 0.82); }
+      .nav-bar { background-color: rgba(28, 28, 30, 0.85); }
     }
 
     .nav-inner {
@@ -84,7 +84,7 @@
 
     .nav-actions {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
     }
 
@@ -106,15 +106,18 @@
     }
 
     .section-title {
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.78rem;
+      font-weight: 600;
       color: var(--secondary-label);
       text-transform: uppercase;
       letter-spacing: 0.2px;
       margin: 18px 0 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* iOS Inset Grouped Card */
+    /* Inset Grouped Card */
     .ios-group {
       background-color: var(--card-bg);
       border-radius: 12px;
@@ -122,12 +125,12 @@
       margin-bottom: 12px;
     }
 
-    /* Métricas estilo Widget */
+    /* Widgets 3x2 */
     .metrics-widget {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .metric-cell {
@@ -167,7 +170,7 @@
     .ios-row label {
       color: var(--label);
       font-weight: 400;
-      min-width: 105px;
+      min-width: 120px;
     }
 
     .ios-row input, .ios-row select {
@@ -180,20 +183,16 @@
       outline: none;
     }
 
-    .ios-row input::placeholder {
-      color: var(--tertiary-label);
-    }
+    .ios-row input::placeholder { color: var(--tertiary-label); }
 
-    /* iOS Switch Control */
+    /* Switch */
     .switch-wrap {
       position: relative;
       display: inline-block;
       width: 51px;
       height: 31px;
     }
-
     .switch-wrap input { display: none; }
-
     .switch-slider {
       position: absolute;
       cursor: pointer;
@@ -202,7 +201,6 @@
       border-radius: 31px;
       transition: 0.3s;
     }
-
     .switch-slider:before {
       position: absolute;
       content: "";
@@ -215,16 +213,9 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.15);
       transition: 0.3s;
     }
+    input:checked + .switch-slider { background-color: var(--success); }
+    input:checked + .switch-slider:before { transform: translateX(20px); }
 
-    input:checked + .switch-slider {
-      background-color: var(--success);
-    }
-
-    input:checked + .switch-slider:before {
-      transform: translateX(20px);
-    }
-
-    /* Action Buttons */
     .btn-block {
       width: 100%;
       background-color: var(--accent);
@@ -235,12 +226,11 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 6px;
     }
-
     .btn-block:active { opacity: 0.8; }
 
-    /* Scan Box */
+    /* Escáner */
     .scan-box {
       border: 1.5px dashed var(--tertiary-label);
       border-radius: 12px;
@@ -248,12 +238,35 @@
       text-align: center;
       cursor: pointer;
       background: var(--card-bg);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
-
     .scan-box:active { background: var(--bg); }
 
-    /* Gastos List Item */
+    /* Checklist Auditoría RF-V-01 */
+    .audit-list {
+      padding: 8px 16px;
+      font-size: 0.82rem;
+    }
+    .audit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--separator);
+    }
+    .audit-item:last-child { border-bottom: none; }
+    
+    .badge-check {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .badge-ok { background: rgba(52, 199, 89, 0.15); color: var(--success); }
+    .badge-no { background: rgba(255, 59, 48, 0.15); color: var(--danger); }
+    .badge-warn { background: rgba(255, 149, 0, 0.15); color: var(--warning); }
+
+    /* Gastos List */
     .expense-item {
       padding: 12px 16px;
       display: flex;
@@ -261,58 +274,18 @@
       align-items: center;
       border-bottom: 0.5px solid var(--separator);
     }
-
     .expense-item:last-child { border-bottom: none; }
-
-    .expense-left {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .expense-name {
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .expense-meta {
-      font-size: 0.75rem;
-      color: var(--secondary-label);
-    }
-
-    .expense-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .expense-val {
-      font-size: 1rem;
-      font-weight: 600;
-      text-align: right;
-    }
-
-    .del-btn {
-      background: none;
-      border: none;
-      color: var(--danger);
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-
-    .badge-check {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-    .badge-ok { background: rgba(52, 199, 89, 0.15); color: var(--success); }
-    .badge-no { background: rgba(255, 59, 48, 0.15); color: var(--danger); }
+    .expense-left { display: flex; flex-direction: column; gap: 2px; }
+    .expense-name { font-size: 0.95rem; font-weight: 600; }
+    .expense-meta { font-size: 0.75rem; color: var(--secondary-label); }
+    .expense-right { display: flex; align-items: center; gap: 10px; }
+    .expense-val { font-size: 1rem; font-weight: 600; text-align: right; }
+    .del-btn { background: none; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- Barra de Navegación Estilo iOS -->
+  <!-- Barra Superior -->
   <header class="nav-bar">
     <div class="nav-inner">
       <h1>Viáticos</h1>
@@ -325,58 +298,84 @@
 
   <main class="container">
 
-    <!-- Widgets Resumen en cuadrícula 3x2 -->
-<div class="metrics-widget">
-  <!-- Fila 1 -->
-  <div class="metric-cell">
-    <span class="metric-cell-label">Presupuesto</span>
-    <span class="metric-cell-val" id="m-budget">$0.00</span>
-  </div>
-  <div class="metric-cell">
-    <span class="metric-cell-label">Gastado</span>
-    <span class="metric-cell-val" id="m-spent" style="color: var(--warning);">$0.00</span>
-  </div>
-
-  <!-- Fila 2 -->
-  <div class="metric-cell">
-    <span class="metric-cell-label">Disponible</span>
-    <span class="metric-cell-val" id="m-balance" style="color: var(--success);">$0.00</span>
-  </div>
-  <div class="metric-cell">
-    <span class="metric-cell-label">Sin Factura</span>
-    <span class="metric-cell-val" id="m-unbilled" style="color: var(--danger);">$0.00</span>
-  </div>
-
-  <!-- Fila 3: Por Día y Medio Día lado a lado -->
-  <div class="metric-cell">
-    <span class="metric-cell-label">Por Día (5 d)</span>
-    <span class="metric-cell-val" id="m-daily" style="color: var(--accent);">$0.00</span>
-  </div>
-  <div class="metric-cell">
-    <span class="metric-cell-label">Medio Día (0.5 d)</span>
-    <span class="metric-cell-val" id="m-half-day" style="color: var(--accent);">$0.00</span>
-  </div>
-</div>
+    <!-- Cuadrícula 3x2: Presupuesto, Gastado, Disponible, Sin Factura, 5 días y 0.5 días -->
+    <div class="metrics-widget">
+      <div class="metric-cell">
+        <span class="metric-cell-label">Presupuesto</span>
+        <span class="metric-cell-val" id="m-budget">$0.00</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Gastado</span>
+        <span class="metric-cell-val" id="m-spent" style="color: var(--warning);">$0.00</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Disponible</span>
+        <span class="metric-cell-val" id="m-balance" style="color: var(--success);">$0.00</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Sin Factura</span>
+        <span class="metric-cell-val" id="m-unbilled" style="color: var(--danger);">$0.00</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Por Día (5 d)</span>
+        <span class="metric-cell-val" id="m-daily" style="color: var(--accent);">$0.00</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-cell-label">Medio Día (0.5 d)</span>
+        <span class="metric-cell-val" id="m-half-day" style="color: var(--accent);">$0.00</span>
+      </div>
     </div>
 
-    <!-- Comisionado e Info -->
-    <div class="section-title">Detalles del Comisionado</div>
+    <!-- Requisitos CFDI (RF-V-01) y Ficha INEGI -->
+    <div class="section-title">
+      <span>Requisitos CFDI (Norma RF-V-01)</span>
+      <button class="ios-link-btn" style="font-size:0.75rem;" onclick="copyRFC()">Copiar Ficha</button>
+    </div>
     <div class="ios-group">
       <div class="ios-row">
-        <label>Nombre</label>
-        <input type="text" id="c-name" placeholder="Requerido" oninput="autoSave()">
+        <label>4.a) Clave RFC</label>
+        <span style="font-family:monospace; font-weight:600;">INE0804164Z7</span>
+      </div>
+      <div class="ios-row">
+        <label>4.b) Razón Social</label>
+        <span style="font-size:0.78rem; text-align:right;">Instituto Nacional de Estadística y Geografía</span>
+      </div>
+      <div class="ios-row">
+        <label>4.c) Código Postal</label>
+        <span style="font-family:monospace; font-weight:600;">20276</span>
+      </div>
+      <div class="ios-row">
+        <label>4.d) Uso CFDI</label>
+        <span>G03 Gastos en general</span>
+      </div>
+      <div class="ios-row">
+        <label>4.e) Régimen Receptor</label>
+        <span style="font-size:0.85rem;">603 Persona moral no lucrativa</span>
+      </div>
+      <div class="ios-row">
+        <label>8. Método y Forma</label>
+        <span style="font-size:0.8rem;">PUE (01 Efectivo, 04 Crédito, 28 Débito)</span>
+      </div>
+    </div>
+
+    <!-- Datos del Comisionado -->
+    <div class="section-title">Detalles de la Comisión</div>
+    <div class="ios-group">
+      <div class="ios-row">
+        <label>Comisionado/a</label>
+        <input type="text" id="c-name" placeholder="Nombre completo" oninput="autoSave()">
       </div>
       <div class="ios-row">
         <label>Correo</label>
-        <input type="email" id="c-email" placeholder="institucional" oninput="autoSave()">
+        <input type="email" id="c-email" placeholder="ejemplo@inegi.org.mx" oninput="autoSave()">
       </div>
       <div class="ios-row">
         <label>Destino</label>
-        <input type="text" id="c-dest" placeholder="Coordinación" oninput="autoSave()">
+        <input type="text" id="c-dest" placeholder="Coordinación Estatal" oninput="autoSave()">
       </div>
       <div class="ios-row">
         <label>Periodo</label>
-        <input type="text" id="c-period" placeholder="Fechas" oninput="autoSave()">
+        <input type="text" id="c-period" placeholder="Ej. 21 al 26 de Septiembre" oninput="autoSave()">
       </div>
       <div class="ios-row">
         <label>Monto Asignado</label>
@@ -384,43 +383,59 @@
       </div>
     </div>
 
-    <!-- Ficha Fiscal Visible -->
-<div class="section-title">Datos de Facturación INEGI (CFDI 4.0)</div>
-<div class="ios-group">
-  <div class="ios-row">
-    <label>RFC</label>
-    <span style="font-weight:600; font-family:monospace;">INE0804164Z7</span>
-  </div>
-  <div class="ios-row">
-    <label>Razón Social</label>
-    <span style="font-size:0.8rem; text-align:right;">INSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA</span>
-  </div>
-  <div class="ios-row">
-    <label>Régimen</label>
-    <span style="font-size:0.85rem;">603 - No Lucrativos</span>
-  </div>
-  <div class="ios-row">
-    <label>C.P. Fiscal</label>
-    <span style="font-weight:600; font-family:monospace;">20276</span>
-  </div>
-  <div class="ios-row">
-    <label>Uso CFDI</label>
-    <span>G03 - Gastos en general</span>
-  </div>
-</div>
-
-    <!-- Escáner Rápido -->
-    <div class="section-title">Comprobante Rápido</div>
+    <!-- Escaneo y Auditoría RF-V-01 -->
+    <div class="section-title">Escanear y Validar Factura</div>
     <div class="scan-box" onclick="document.getElementById('file-in').click()">
-      <div style="font-size: 1.5rem; margin-bottom: 2px;">📷</div>
-      <div style="font-weight: 500; font-size: 0.9rem;">Escanear Factura o Ticket</div>
-      <div style="font-size: 0.75rem; color: var(--secondary-label); margin-top: 2px;">Toma foto o sube un PDF / XML</div>
+      <div style="font-size: 1.5rem;">📷 / 📄</div>
+      <div style="font-weight: 500; font-size: 0.9rem; margin-top: 2px;">Tomar foto o subir comprobante</div>
+      <div style="font-size: 0.75rem; color: var(--secondary-label);">Valida automáticamente los 8 puntos del CFDI</div>
       <input type="file" id="file-in" style="display:none;" accept="image/*,application/pdf,text/xml,.xml" onchange="runOCR(event)">
     </div>
-    <div id="ocr-loader" style="display:none; text-align:center; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">Leyendo comprobante...</div>
+    <div id="ocr-loader" style="display:none; text-align:center; font-size: 0.8rem; color: var(--accent); margin-bottom: 10px;">Auditando requisitos RF-V-01...</div>
+
+    <!-- Panel de Validación RF-V-01 -->
+    <div class="ios-group" id="audit-card" style="display:none; margin-bottom: 12px;">
+      <div style="padding: 10px 16px; font-weight:600; font-size:0.85rem; border-bottom:0.5px solid var(--separator);">
+        Auditoría CFDI (Norma RF-V-01)
+      </div>
+      <div class="audit-list">
+        <div class="audit-item">
+          <span>1. Régimen del Proveedor</span>
+          <span class="badge-check" id="v-p1">-</span>
+        </div>
+        <div class="audit-item">
+          <span>2. Folio / Sello Digital (UUID)</span>
+          <span class="badge-check" id="v-p2">-</span>
+        </div>
+        <div class="audit-item">
+          <span>3. Fecha y Lugar (C.P.)</span>
+          <span class="badge-check" id="v-p3">-</span>
+        </div>
+        <div class="audit-item">
+          <span>4. Receptor: RFC INE0804164Z7</span>
+          <span class="badge-check" id="v-p4-rfc">-</span>
+        </div>
+        <div class="audit-item">
+          <span>4. Receptor: C.P. 20276 / Razón</span>
+          <span class="badge-check" id="v-p4-cp">-</span>
+        </div>
+        <div class="audit-item">
+          <span>5 y 6. Concepto e Impuestos</span>
+          <span class="badge-check" id="v-p5">-</span>
+        </div>
+        <div class="audit-item">
+          <span>7. Importe Total Detectado</span>
+          <span class="badge-check badge-ok" id="v-p7">$0.00</span>
+        </div>
+        <div class="audit-item">
+          <span>8. Método PUE (01, 04 o 28)</span>
+          <span class="badge-check" id="v-p8">-</span>
+        </div>
+      </div>
+    </div>
 
     <!-- Captura de Gasto -->
-    <div class="section-title">Registrar Gasto</div>
+    <div class="section-title">Registrar Gasto del Día</div>
     <div class="ios-group">
       <div class="ios-row">
         <label>Concepto</label>
@@ -431,10 +446,12 @@
         <input type="number" id="g-amount" placeholder="0.00" step="0.01">
       </div>
       <div class="ios-row">
-        <label>Método</label>
+        <label>8. Forma Pago</label>
         <select id="g-method">
-          <option value="Tarjeta">Tarjeta</option>
-          <option value="Efectivo">Efectivo</option>
+          <option value="28 Tarjeta de débito">28 Tarjeta de débito</option>
+          <option value="04 Tarjeta de crédito">04 Tarjeta de crédito</option>
+          <option value="01 Efectivo">01 Efectivo</option>
+          <option value="03 Transferencia">03 Transferencia</option>
         </select>
       </div>
       <div class="ios-row">
@@ -444,20 +461,20 @@
           <option value="Hospedaje">Hospedaje</option>
           <option value="Gasolina">Combustible</option>
           <option value="Casetas">Casetas</option>
-          <option value="Transporte">Transporte</option>
+          <option value="Transporte">Transporte Local</option>
           <option value="Otros">Otros</option>
         </select>
       </div>
       <div class="ios-row">
-        <label>Fecha</label>
+        <label>3. Fecha</label>
         <input type="date" id="g-date">
       </div>
       <div class="ios-row">
-        <label>Folio / Ticket</label>
-        <input type="text" id="g-uuid" placeholder="Opcional">
+        <label>2. Folio / UUID</label>
+        <input type="text" id="g-uuid" placeholder="Folio fiscal">
       </div>
       <div class="ios-row">
-        <label>Factura (CFDI)</label>
+        <label>Cuenta con CFDI</label>
         <label class="switch-wrap">
           <input type="checkbox" id="g-invoice" checked>
           <span class="switch-slider"></span>
@@ -465,25 +482,19 @@
       </div>
     </div>
 
-    <button class="btn-block" onclick="addExpense()">Agregar Desembolso</button>
+    <button class="btn-block" onclick="addExpense()">Agregar a Bitácora</button>
 
-    <!-- Bitácora -->
-    <div class="section-title" style="margin-top: 24px;">Historial de Gastos</div>
-    <div class="ios-group" id="expenses-list">
-      <!-- Elementos dinámicos -->
-    </div>
-
-    <div style="text-align: center; margin-top: 14px;">
-      <button class="ios-link-btn" onclick="copyRFC()">Copiar RFC del INEGI</button>
-    </div>
+    <!-- Historial de Gastos -->
+    <div class="section-title" style="margin-top: 24px;">Bitácora de Gastos</div>
+    <div class="ios-group" id="expenses-list"></div>
 
   </main>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_zOhyg1X6aTWEOnQzx3OMMBO4T3r4YYjnIU6My5oUQTchiEC9eapEsZQQHP2BWQec5g/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/TU_ID_AQUI/exec";
 
     let expenses = [
-      { id: 1, date: '2026-09-17', desc: 'Hotel estancia', uuid: 'F-84920', amount: 6000.00, method: 'Tarjeta', cat: 'Hospedaje', invoice: true }
+      { id: 1, date: '2026-09-17', desc: 'Hotel estancia', uuid: 'F-84920', amount: 6000.00, method: '28 Tarjeta de débito', cat: 'Hospedaje', invoice: true }
     ];
     let isPrivate = false;
 
@@ -506,7 +517,7 @@
       expenses.forEach((item, index) => {
         const row = document.createElement('div');
         row.className = 'expense-item';
-        const displayAmount = isPrivate ? '••••••' : `$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        const displayAmount = isPrivate ? '••••••' : `$${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
         row.innerHTML = `
           <div class="expense-left">
@@ -539,6 +550,12 @@
         return;
       }
 
+      // Prevenir duplicados
+      const isDup = expenses.some(e => (uuid && e.uuid && e.uuid.toLowerCase() === uuid.toLowerCase()) || (e.amount === amount && e.desc.toLowerCase() === desc.toLowerCase()));
+      if (isDup && !confirm(`Posible comprobante duplicado de "${desc}" por $${amount}. ¿Deseas registrarlo?`)) {
+        return;
+      }
+
       expenses.push({ id: Date.now(), date, desc, uuid, amount, method, cat, invoice });
 
       document.getElementById('g-desc').value = '';
@@ -559,44 +576,45 @@
       }
     }
 
-  function recalc() {
-  const budget = parseFloat(document.getElementById('c-budget').value) || 0;
-  let spent = 0;
-  let unbilled = 0;
+    function recalc() {
+      const budget = parseFloat(document.getElementById('c-budget').value) || 0;
+      let spent = 0;
+      let unbilled = 0;
 
-  expenses.forEach(e => {
-    spent += e.amount;
-    if (!e.invoice) unbilled += e.amount;
-  });
+      expenses.forEach(e => {
+        spent += e.amount;
+        if (!e.invoice) unbilled += e.amount;
+      });
 
-  const balance = budget - spent;
-  const days = 5.5; 
-  const dailyAvailable = Math.max(0, balance / days);
-  const halfDayAvailable = dailyAvailable / 2;
+      const balance = budget - spent;
+      const days = 5.5;
+      const dailyAvailable = Math.max(0, balance / days);
+      const halfDayAvailable = dailyAvailable / 2;
 
-  if (isPrivate) {
-    document.getElementById('m-budget').innerText = '••••••';
-    document.getElementById('m-spent').innerText = '••••••';
-    document.getElementById('m-balance').innerText = '••••••';
-    document.getElementById('m-unbilled').innerText = '••••••';
-    document.getElementById('m-daily').innerText = '••••••';
-    document.getElementById('m-half-day').innerText = '••••••';
-  } else {
-    document.getElementById('m-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('m-spent').innerText = `$${spent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('m-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('m-unbilled').innerText = `$${unbilled.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('m-daily').innerText = `$${dailyAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('m-half-day').innerText = `$${halfDayAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-}
-
-    function copyRFC() {
-      navigator.clipboard.writeText('RFC: INE0804164Z7\nINSTITUTO NACIONAL DE ESTADISTICA Y GEOGRAFIA\nRégimen: 603\nCP: 20276\nUso: G03');
-      alert('Datos fiscales del INEGI copiados.');
+      if (isPrivate) {
+        document.getElementById('m-budget').innerText = '••••••';
+        document.getElementById('m-spent').innerText = '••••••';
+        document.getElementById('m-balance').innerText = '••••••';
+        document.getElementById('m-unbilled').innerText = '••••••';
+        document.getElementById('m-daily').innerText = '••••••';
+        document.getElementById('m-half-day').innerText = '••••••';
+      } else {
+        document.getElementById('m-budget').innerText = `$${budget.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('m-spent').innerText = `$${spent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('m-balance').innerText = `$${balance.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('m-unbilled').innerText = `$${unbilled.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('m-daily').innerText = `$${dailyAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('m-half-day').innerText = `$${halfDayAvailable.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
     }
 
-    /* OCR y Extracción */
+    function copyRFC() {
+      const txt = "RFC: INE0804164Z7\nRazón Social: Instituto Nacional de Estadística y Geografía\nC.P. Fiscal: 20276\nRégimen Fiscal: 603 Persona moral con fines no lucrativos\nUso CFDI: G03 Gastos en general\nMétodo: PUE";
+      navigator.clipboard.writeText(txt);
+      alert('Ficha fiscal copiada.');
+    }
+
+    /* Auditoría Automática RF-V-01 */
     async function runOCR(e) {
       const f = e.target.files[0];
       if (!f) return;
@@ -621,19 +639,69 @@
           text = res.data.text;
         }
 
-        fillFromText(text);
+        auditCFDI(text);
       } catch (err) {
-        alert('No se pudo leer el comprobante.');
+        alert('No se pudo procesar el comprobante.');
       } finally {
         loader.style.display = 'none';
       }
     }
 
-    function fillFromText(text) {
-      const isRest = /(RESTAURANT|RESTAURANTE|COMEDOR|ALIMENTOS|BODEGA|CAFE|TAQUERIA|COCINA|BISTRO|GRILL)/i.test(text);
+    function auditCFDI(text) {
+      const cleanUpper = text.toUpperCase();
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-      let vendor = '';
+      document.getElementById('audit-card').style.display = 'block';
 
+      // 1. Régimen Fiscal Proveedor
+      const hasRegProv = /(REGIMEN|RÉGIMEN|601|612|621|625|626)/i.test(cleanUpper);
+      setAuditBadge('v-p1', hasRegProv, hasRegProv ? 'Cumple' : 'Revisar');
+
+      // 2. Folio y Sello (UUID)
+      const uuidMatch = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+      const hasUUID = !!uuidMatch;
+      setAuditBadge('v-p2', hasUUID, hasUUID ? 'UUID OK' : 'Sin Folio Digital');
+      if (hasUUID) document.getElementById('g-uuid').value = uuidMatch[0];
+
+      // 3. Lugar (CP) y Fecha
+      const hasDate = /\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}/.test(text);
+      setAuditBadge('v-p3', hasDate, hasDate ? 'Cumple' : 'Revisar');
+
+      // 4. Datos Receptor INEGI
+      const hasRFC = cleanUpper.includes('INE0804164Z7');
+      setAuditBadge('v-p4-rfc', hasRFC, hasRFC ? 'INE0804164Z7 OK' : 'Falta RFC');
+
+      const hasCP20276 = cleanUpper.includes('20276');
+      setAuditBadge('v-p4-cp', hasCP20276, hasCP20276 ? '20276 OK' : 'Verificar CP');
+
+      // 5 y 6. Concepto e Impuestos (IVA / Tasa)
+      const hasTax = /(IVA|IMPUESTO|16%|0.16|TRASLADADO)/i.test(cleanUpper);
+      setAuditBadge('v-p5', hasTax, hasTax ? 'Desglosado' : 'Revisar');
+
+      // 7. Importe Total
+      const totMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) || text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
+      let detectedAmount = 0;
+      if (totMatch) {
+        detectedAmount = parseFloat(totMatch[1].replace(/,/g, ''));
+        document.getElementById('g-amount').value = detectedAmount;
+      }
+      document.getElementById('v-p7').innerText = `$${detectedAmount.toFixed(2)}`;
+
+      // 8. Método y Forma de Pago
+      const isPUE = cleanUpper.includes('PUE');
+      const isCard = /(TARJETA|04|28|DEBITO|CREDITO)/i.test(cleanUpper);
+      const isCash = /(EFECTIVO|01)/i.test(cleanUpper);
+
+      if (isCard) {
+        document.getElementById('g-method').value = cleanUpper.includes('CREDITO') || cleanUpper.includes('04') ? '04 Tarjeta de crédito' : '28 Tarjeta de débito';
+      } else if (isCash) {
+        document.getElementById('g-method').value = '01 Efectivo';
+      }
+
+      setAuditBadge('v-p8', isPUE || isCard || isCash, isPUE ? 'PUE Detectado' : (isCard ? 'Tarjeta OK' : 'Revisar Forma'));
+
+      // Detección de Nombre y Restaurante
+      const isRest = /(RESTAURANT|RESTAURANTE|COMEDOR|ALIMENTOS|BODEGA|CAFE|TAQUERIA|COCINA|BISTRO|GRILL)/i.test(text);
+      let vendor = '';
       const xmlM = text.match(/<cfdi:Emisor[^>]+Nombre="([^"]+)"/i);
       if (xmlM && xmlM[1]) {
         vendor = xmlM[1];
@@ -641,10 +709,7 @@
         for (let l of lines) {
           const u = l.toUpperCase();
           if (u.includes('INSTITUTO') || u.includes('INE0804164Z7') || u.includes('CFDI') || u.includes('FACTURA')) continue;
-          if (l.length >= 4 && !l.includes(':')) {
-            vendor = l;
-            break;
-          }
+          if (l.length >= 4 && !l.includes(':')) { vendor = l; break; }
         }
       }
 
@@ -655,22 +720,16 @@
       }
 
       if (isRest) document.getElementById('g-cat').value = 'Alimentos';
-
-      const totMatch = text.match(/(?:TOTAL|IMPORTE TOTAL|PAGADO)[:\s\$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/i) || text.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2}))/);
-      if (totMatch) {
-        document.getElementById('g-amount').value = parseFloat(totMatch[1].replace(/,/g, ''));
-      }
-
-      const uuidM = text.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-      if (uuidM) {
-        document.getElementById('g-uuid').value = uuidM[0];
-      }
-
       document.getElementById('g-invoice').checked = true;
-      alert('Datos cargados al formulario de registro.');
     }
 
-    /* Persistencia y Sincronización */
+    function setAuditBadge(elemId, isValid, msg) {
+      const el = document.getElementById(elemId);
+      el.className = `badge-check ${isValid ? 'badge-ok' : 'badge-warn'}`;
+      el.innerText = msg;
+    }
+
+    /* Guardado y Sincronización */
     function autoSave() {
       const data = {
         name: document.getElementById('c-name').value,
@@ -680,11 +739,11 @@
         budget: document.getElementById('c-budget').value,
         expenses: expenses
       };
-      localStorage.setItem('VIATICOS_IOS_MIN', JSON.stringify(data));
+      localStorage.setItem('VIATICOS_IOS_RFV01', JSON.stringify(data));
     }
 
     function restore() {
-      const s = localStorage.getItem('VIATICOS_IOS_MIN');
+      const s = localStorage.getItem('VIATICOS_IOS_RFV01');
       if (!s) return;
       try {
         const d = JSON.parse(s);
@@ -700,7 +759,7 @@
     async function syncCloud(e) {
       const name = document.getElementById('c-name').value.trim();
       if (!name) {
-        alert('Ingresa el nombre del comisionado.');
+        alert('Escribe el nombre del comisionado antes de sincronizar.');
         return;
       }
 
@@ -726,7 +785,7 @@
         });
         alert(`Sincronizado en Google Sheets.`);
       } catch (err) {
-        alert('Error de red. Datos guardados en el teléfono.');
+        alert('Error de red. Tus datos siguen guardados localmente.');
       } finally {
         btn.innerText = 'Sincronizar';
       }
